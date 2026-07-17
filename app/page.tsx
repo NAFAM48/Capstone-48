@@ -8,18 +8,7 @@ export default function LoginPage() {
         <section className="flex flex-col justify-center bg-blue-900 p-8 sm:p-10 text-white">
           <div className="mb-6 flex items-center gap-2">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-1 shadow-lg">
-              <svg viewBox="0 0 64 64" className="h-14 w-14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="28" fill="#F8FAFC"/>
-                <path d="M20 24C20 20.6863 22.6863 18 26 18H38C41.3137 18 44 20.6863 44 24V28H20V24Z" fill="#1D4ED8"/>
-                <path d="M20 28H44V40C44 42.2091 42.2091 44 40 44H24C21.7909 44 20 42.2091 20 40V28Z" fill="#2563EB"/>
-                <path d="M24 32H40" stroke="#F8FAFC" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M26 20L24 44" stroke="#1E3A8A" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M38 20L40 44" stroke="#1E3A8A" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M20 28L16 24" stroke="#1E3A8A" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M44 28L48 24" stroke="#1E3A8A" strokeWidth="3" strokeLinecap="round"/>
-                <circle cx="24" cy="36" r="2" fill="#F8FAFC"/>
-                <circle cx="40" cy="36" r="2" fill="#F8FAFC"/>
-              </svg>
+              <Image src="/nafam-logo.svg" alt="NAFAM logo" width={56} height={56} className="rounded-xl" />
             </div>
             <div className="flex flex-col justify-center">
               <h1 className="-ml-1 text-[1.7rem] font-black tracking-[0.2em] text-white">NAFAM</h1>
@@ -96,6 +85,7 @@ export default function LoginPage() {
     </main>
   );
 }
+
 
 
 
