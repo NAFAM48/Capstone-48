@@ -1,35 +1,50 @@
 export default function Dashboard() {
     return (
+        <main className="min-h-screen bg-gray-100 p-8">
 
-        <main className="min-h-screen bg-gray-100 p-10">
+            {/* Header */}
 
-            <h1 className="text-5xl font-black text-blue-900">
+            <div className="mb-10">
 
-                NAFAM Toy Factory Dashboard
+                <h1 className="text-5xl font-black text-blue-900">
+                    PlayForge Industries
+                </h1>
 
-            </h1>
+                <p className="text-gray-500 text-lg">
+                    Building Better Toys Every Day
+                </p>
 
-            <p className="text-gray-500 mb-10">
-
-                Toy Manufacturing Analytics Dashboard
-
-            </p>
+            </div>
 
 
-            <div className="grid grid-cols-2 gap-6">
+            {/* Welcome Message */}
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg mb-8">
+
+                <h2 className="text-3xl font-bold">
+                    Welcome Back!
+                </h2>
+
+                <p className="text-gray-500 mt-2">
+                    Here is todays factory performance overview.
+                </p>
+
+            </div>
+
+
+
+            {/* Statistics Cards */}
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                 <div className="bg-white p-6 rounded-xl shadow-lg">
 
-                    <h2 className="text-xl font-bold">
+                    <h3 className="font-semibold">
+                        Total Production
+                    </h3>
 
-                        Production Today
-
-                    </h2>
-
-                    <p className="text-4xl mt-4">
-
+                    <p className="text-4xl font-bold mt-3">
                         1450
-
                     </p>
 
                     <p>Toys Produced</p>
@@ -37,18 +52,15 @@ export default function Dashboard() {
                 </div>
 
 
+
                 <div className="bg-white p-6 rounded-xl shadow-lg">
 
-                    <h2 className="text-xl font-bold">
-
+                    <h3 className="font-semibold">
                         Active Machines
+                    </h3>
 
-                    </h2>
-
-                    <p className="text-4xl mt-4">
-
+                    <p className="text-4xl font-bold mt-3">
                         24
-
                     </p>
 
                     <p>Machines Running</p>
@@ -59,17 +71,15 @@ export default function Dashboard() {
 
                 <div className="bg-white p-6 rounded-xl shadow-lg">
 
-                    <h2 className="text-xl font-bold">
+                    <h3 className="font-semibold">
+                        Efficiency
+                    </h3>
 
-                        Production Efficiency
-
-                    </h2>
-
-                    <p className="text-4xl mt-4">
-
+                    <p className="text-4xl font-bold mt-3">
                         96%
-
                     </p>
+
+                    <p>Production Efficiency</p>
 
                 </div>
 
@@ -77,49 +87,155 @@ export default function Dashboard() {
 
                 <div className="bg-white p-6 rounded-xl shadow-lg">
 
-                    <h2 className="text-xl font-bold">
+                    <h3 className="font-semibold">
+                        Quality Score
+                    </h3>
 
-                        Production Noise
-
-                    </h2>
-
-                    <p className="text-4xl mt-4">
-
-                        LOW
-
+                    <p className="text-4xl font-bold mt-3">
+                        98%
                     </p>
 
-                </div>
+                    <p>Factory Quality</p>
 
+                </div>
 
             </div>
 
 
-            <div className="bg-white p-8 rounded-xl shadow-lg mt-10">
+
+
+            {/* Factory Status */}
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg mt-8">
+
+                <h2 className="text-2xl font-bold mb-4">
+
+                    Factory Status
+
+                </h2>
+
+                <p className="text-green-600 font-bold text-xl">
+
+                    ● Operational
+
+                </p>
+
+            </div>
+
+
+
+
+            {/* Production Progress */}
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg mt-8">
 
                 <h2 className="text-2xl font-bold">
 
-                    Todays Overview
+                    Todays Production Target
 
                 </h2>
 
 
-                <ul className="mt-5 space-y-3">
+                <p className="mt-4">
 
-                    <li>Production Target Achieved.</li>
+                    1450 / 2000 Toys Produced
 
-                    <li>Quality Score: 98%</li>
+                </p>
 
-                    <li>Factory Status: Operational.</li>
 
-                    <li>Energy Consumption: Normal.</li>
+                <div className="w-full bg-gray-300 rounded-full h-5 mt-4">
+
+                    <div
+                        className="bg-blue-900 h-5 rounded-full"
+                        style={{ width: "75%" }}
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+
+
+            {/* Notifications */}
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg mt-8">
+
+                <h2 className="text-2xl font-bold mb-5">
+
+                    Recent Activities
+
+                </h2>
+
+                <ul className="space-y-3">
+
+                    <li>
+                        ✓ Production line synchronized successfully.
+                    </li>
+
+                    <li>
+                        ✓ Machine 04 operating normally.
+                    </li>
+
+                    <li>
+                        ✓ Production target is on track.
+                    </li>
+
+                    <li>
+                        ✓ Quality standards maintained.
+                    </li>
 
                 </ul>
 
             </div>
 
 
-        </main>
 
+
+            {/* Quick Access */}
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg mt-8">
+
+                <h2 className="text-2xl font-bold mb-5">
+
+                    Quick Access
+
+                </h2>
+
+
+                <div className="grid md:grid-cols-2 gap-4">
+
+                    <button className="bg-blue-900 text-white p-4 rounded-xl">
+
+                        Production Monitoring
+
+                    </button>
+
+
+                    <button className="bg-blue-900 text-white p-4 rounded-xl">
+
+                        Machine Analytics
+
+                    </button>
+
+
+                    <button className="bg-blue-900 text-white p-4 rounded-xl">
+
+                        Notifications
+
+                    </button>
+
+
+                    <button className="bg-blue-900 text-white p-4 rounded-xl">
+
+                        Efficiency Reports
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </main>
     );
 }
