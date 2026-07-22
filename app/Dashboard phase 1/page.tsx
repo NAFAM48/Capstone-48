@@ -7,7 +7,7 @@ export default function Dashboard() {
             <div className="mb-10">
 
                 <h1 className="text-5xl font-black text-blue-900">
-                    PlayForge Industries
+                    NAFAM Toy Factory
                 </h1>
 
                 <p className="text-gray-500 text-lg">
