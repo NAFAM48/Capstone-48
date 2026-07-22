@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: toy-factory-backend
+    env: docker
+    plan: free
+    repo: null
+    buildCommand: ./mvnw -B package -DskipTests
+    startCommand: java -jar /app/app.jar
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+      - key: SPRING_DATASOURCE_USERNAME
+      - key: SPRING_DATASOURCE_PASSWORD
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+      - key: SPRING_JPA_SHOW_SQL
+      - key: SPRING_JPA_HIBERNATE_DIALECT
+    dockerfilePath: ./Dockerfile
