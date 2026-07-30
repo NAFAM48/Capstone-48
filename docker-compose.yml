@@ -1,0 +1,9 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ampm
+      POSTGRES_USER: ampm
+      POSTGRES_PASSWORD: ampm
+    ports:
+      - "5433:5432"
