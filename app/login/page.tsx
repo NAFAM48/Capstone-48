@@ -65,7 +65,7 @@ export default function LoginPage() {
             
             <div className="mb-8 text-center">
               <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50/50 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 backdrop-blur-sm">
-                NAFAM OEE Control
+                NAFAM Toy Factory
               </span>
               <h1 className="mt-4 text-3xl font-extrabold text-slate-900">Welcome back</h1>
               <p className="mt-2 text-sm text-slate-600">Sign in to access your manufacturing dashboard.</p>

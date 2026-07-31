@@ -141,7 +141,7 @@ export default function Sidebar({
             </div>
             <div>
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.3em] text-slate-500">NAFAM</p>
-              <h1 className="text-lg font-black tracking-tight text-white">OEE Control</h1>
+              <h1 className="text-lg font-black tracking-tight text-white">Toy Factory</h1>
             </div>
           </div>
           

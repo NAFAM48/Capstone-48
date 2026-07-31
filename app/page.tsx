@@ -34,7 +34,7 @@ export default function HomePage() {
           <div className="space-y-8 lg:max-w-2xl animate-fade-up">
             <div>
               <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50/50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 backdrop-blur-sm">
-                NAFAM OEE Control
+                NAFAM Toy Factory
               </span>
               <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
                 Remove noise, <br />
