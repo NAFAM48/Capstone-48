@@ -129,7 +129,7 @@ export default function Sidebar({
         }
       `}</style>
 
-      <aside className="flex flex-col border-b border-slate-800 bg-[#0B1120] text-slate-300 md:w-72 md:min-h-screen md:shrink-0 md:border-b-0 md:border-r">
+      <aside className="flex flex-col  h-screen border-b border-slate-800 bg-[#0B1120] text-slate-300 md:w-72 md:min-h-screen md:shrink-0 md:border-b-0 md:border-r">
         
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 py-6 md:px-8 md:py-8">
