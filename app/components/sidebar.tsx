@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 const navItems = [
   { 
@@ -90,11 +89,6 @@ export default function Sidebar({
   userRole = "Factory Manager" 
 }: SidebarProps) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Automatically compute initials from the user's name
   const userInitials = userName
@@ -129,12 +123,12 @@ export default function Sidebar({
         }
       `}</style>
 
-      <aside className="flex flex-col  h-screen border-b border-slate-800 bg-[#0B1120] text-slate-300 md:w-72 md:min-h-screen md:shrink-0 md:border-b-0 md:border-r">
+      <aside className="sticky top-0 left-0 z-20 flex flex-col h-screen min-h-screen overflow-y-auto border-r border-slate-800 bg-[#0B1120] text-slate-300 w-full md:fixed md:h-screen md:w-72 md:shrink-0">
         
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 py-6 md:px-8 md:py-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg shadow-blue-900/50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-lg shadow-blue-900/50" style={{ backgroundImage: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}>
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -154,7 +148,7 @@ export default function Sidebar({
         <nav className="no-scrollbar flex overflow-x-auto px-4 pb-4 md:block md:overflow-visible md:px-4 md:pb-8">
           <div className="flex gap-2 md:flex-col md:space-y-1">
             {navItems.map((item, index) => {
-              const isActive = mounted && pathname === item.href;
+              const isActive = pathname === item.href;
 
               return (
                 <Link

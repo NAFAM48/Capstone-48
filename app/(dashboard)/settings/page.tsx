@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import DashboardShell from "../components/dashboard-shell";
+import DashboardShell from "@/app/components/dashboard-shell";
 import { getMachines } from "@/lib/demo-data";
 
 export default function Settings() {
@@ -8,8 +8,6 @@ export default function Settings() {
 
   return (
     <DashboardShell>
-
-        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12">
           <div className="mx-auto max-w-7xl">
             
             {/* Header Area */}
@@ -113,8 +111,6 @@ export default function Settings() {
             </div>
 
           </div>
-          </main>
       </DashboardShell>
-    
   );
 }

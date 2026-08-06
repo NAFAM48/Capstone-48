@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import DashboardShell from "../components/dashboard-shell";
+import DashboardShell from "@/app/components/dashboard-shell";
 import { getFactoryOverview } from "@/lib/oee";
 import { getDowntimeEvents, getMachines, getProductionRecords } from "@/lib/demo-data";
 
@@ -135,9 +135,12 @@ export default function EfficiencyAnalytics() {
                           <p className="text-sm font-bold text-blue-600">{item.value}</p>
                         </div>
                         <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-slate-200/60">
-                          <div 
-                            style={{ width: `${percentage}%` }} 
-                            className="h-full rounded-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-500" 
+                          <div
+                            style={{
+                              width: `${percentage}%`,
+                              backgroundImage: "linear-gradient(to right, #2563eb, #38bdf8)",
+                            }}
+                            className="h-full rounded-full transition-all duration-500"
                           />
                         </div>
                       </div>
