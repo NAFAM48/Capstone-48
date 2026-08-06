@@ -7,10 +7,17 @@ services:
     buildCommand: ./mvnw -B package -DskipTests
     startCommand: java -jar /app/app.jar
     envVars:
+      - key: PORT
+        value: 10000
       - key: SPRING_DATASOURCE_URL
       - key: SPRING_DATASOURCE_USERNAME
       - key: SPRING_DATASOURCE_PASSWORD
+      - key: SPRING_DATASOURCE_SSLMODE
+        value: require
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
       - key: SPRING_JPA_SHOW_SQL
+        value: true
       - key: SPRING_JPA_HIBERNATE_DIALECT
+        value: org.hibernate.dialect.PostgreSQLDialect
     dockerfilePath: ./Dockerfile
