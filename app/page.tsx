@@ -1,6 +1,70 @@
-import Link from "next/link";
+'use client';
 
-export default function HomePage() {
+import Image from 'next/image';
+import { type SyntheticEvent, useState } from 'react';
+
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8080';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const submitButtonLabel = loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Sign Up';
+
+  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatusMessage('');
+    setErrorMessage('');
+
+    if (!email || !password) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/auth/${mode}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          ...(mode === 'signup' ? { role: 'OPERATOR' } : {}),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setErrorMessage(
+          typeof data === 'string'
+            ? data
+            : data?.message || 'Auth failed. Check credentials and try again.'
+        );
+      } else if (mode === 'signup') {
+        setStatusMessage('Account created successfully. Please sign in.');
+        setMode('signin');
+        setPassword('');
+      } else {
+        setStatusMessage(`Signed in successfully as ${data?.email || email}.`);
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unable to reach the backend. Is it running on http://localhost:8080?';
+      setErrorMessage(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+
+  
+
+
   return (
     <>
       {/* Zero-config custom animations for a polished load-in effect */}
@@ -71,55 +135,88 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right Column: Feature Card */}
-          <div className="w-full lg:max-w-lg animate-fade-up delay-200">
-            <div className="relative rounded-[2rem] border border-white/40 bg-white/70 p-8 shadow-2xl shadow-slate-200/50 backdrop-blur-xl sm:p-10 transition-all duration-500 hover:-translate-y-1 hover:shadow-blue-900/10">
-              {/* Subtle top highlight for the card */}
-              <div className="absolute inset-x-0 -top-px mx-auto h-px w-1/2 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"></div>
-              
-              <div className="space-y-8">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Abstraction Pillar</p>
-                  <h2 className="mt-2 text-2xl font-bold text-slate-900">OEE-first visibility</h2>
-                </div>
-                
-                <div className="space-y-5">
-                  {/* Metric 1 */}
-                  <div className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white/50 p-4 transition-colors hover:bg-white">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">Metrics preserved</p>
-                      <p className="mt-1 text-sm text-slate-600">Machine status, cycle time, yield, downtime reason codes, and shift context.</p>
-                    </div>
-                  </div>
+          <h2 className="mb-6 text-2xl">Monitoring System</h2>
 
-                  {/* Metric 2 */}
-                  <div className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white/50 p-4 transition-colors hover:bg-white">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">Noise filtered out</p>
-                      <p className="mt-1 text-sm text-slate-600">Raw vibration, sensor jitter, and micro-behavior are omitted from the abstraction.</p>
-                    </div>
-                  </div>
-                </div>
+          <div className="space-y-2 text-lg">
+            <p>Building Better Toys Everyday</p>
+            <p>Production Lines</p>
+            <p>Quality Monitoring</p>
+            <p>Machine Analytics</p>
+            <p>Factory Performance</p>
+          </div>
+        </section>
 
-                {/* Bottom Highlight Box */}
-                <div className="rounded-2xl bg-slate-900 p-5 text-left shadow-inner">
-                  <p className="text-sm font-semibold text-blue-300">OEE Formula Definition</p>
-                  <p className="mt-2 text-sm text-slate-300">
-                    <span className="text-white font-medium">Effectiveness</span> = Availability × Performance × Quality. 
-                    This platform is built strictly around that headline metric.
-                  </p>
-                </div>
-                
+        {/* Right Section */}
+        <section className="p-8 sm:p-10">
+          <h2 className="mb-2 text-3xl font-bold text-gray-900">Welcome Back</h2>
+          <p className="mb-8 text-gray-500">Please login to continue or create a new account.</p>
+
+          <form onSubmit={handleSubmit}>
+            <label htmlFor="email" className="mb-2 block font-medium text-gray-700">Email Address</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Enter your email"
+              className="mb-5 w-full rounded-lg border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <label htmlFor="password" className="mb-2 block font-medium text-gray-700">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter your password"
+              className="mb-5 w-full rounded-lg border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div className="mb-6 flex items-center gap-2">
+              <input type="checkbox" id="remember" className="h-4 w-4 rounded border-gray-300 text-blue-900 focus:ring-blue-500" />
+              <label htmlFor="remember" className="text-gray-600">Remember Me</label>
+            </div>
+
+            {errorMessage ? (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errorMessage}</div>
+            ) : null}
+
+            {statusMessage ? (
+              <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{statusMessage}</div>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-blue-900 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitButtonLabel}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === 'signin' ? 'signup' : 'signin');
+              setStatusMessage('');
+              setErrorMessage('');
+            }}
+            className="mt-3 w-full rounded-lg border border-blue-900 py-3 text-blue-900 transition hover:bg-blue-50"
+          >
+            {mode === 'signin' ? 'Create a new account' : 'Already have an account? Sign In'}
+          </button>
+
+          <div className="mt-4 flex flex-col gap-3">
+            <button className="flex items-center justify-center gap-3 rounded-lg border border-gray-200 py-3 text-gray-700 transition hover:bg-gray-50">
+              <div className="flex h-5 w-5 items-center justify-center">
+                <Image src="/google-logo.svg" alt="Google logo" width={18} height={18} />
+              </div>
+              <span>Continue with Google</span>
+            </button>
+
+            <button className="flex items-center justify-center gap-3 rounded-lg border border-gray-200 py-3 text-gray-700 transition hover:bg-gray-50">
+              <div className="flex h-5 w-5 items-center justify-center">
+                <Image src="/apple-logo.svg" alt="Apple logo" width={18} height={18} />
               </div>
             </div>
           </div>
