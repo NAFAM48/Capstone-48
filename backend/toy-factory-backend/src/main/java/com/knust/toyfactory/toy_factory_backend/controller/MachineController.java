@@ -11,19 +11,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.knust.toyfactory.toy_factory_backend.model.Machine;
 import com.knust.toyfactory.toy_factory_backend.repository.MachineRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/machines")
+@Tag(name = "Machines", description = "Manage machine data")
 public class MachineController {
 
     @Autowired
     private MachineRepository machineRepository;
 
+    @Operation(summary = "Get all machines")
     @GetMapping
     public List<Machine> getAllMachines() {
         return machineRepository.findAll();
     }
 
+    @Operation(summary = "Create a machine")
     @PostMapping
     public Machine addMachine(@RequestBody Machine machine) {
         return machineRepository.save(machine);

@@ -2,6 +2,8 @@ package com.knust.toyfactory.toy_factory_backend.controller;
 
 import com.knust.toyfactory.toy_factory_backend.model.User;
 import com.knust.toyfactory.toy_factory_backend.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "User sign up and sign in endpoints")
 public class AuthController {
 
     @Autowired
@@ -21,6 +24,7 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
 
     // Register a new user
+    @Operation(summary = "Register a new user")
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -39,6 +43,7 @@ public class AuthController {
     }
 
     // Log in an existing user
+    @Operation(summary = "Sign in an existing user")
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody Map<String, String> request) {
         String email = request.get("email");
