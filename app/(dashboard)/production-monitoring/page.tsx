@@ -1,7 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import DashboardShell from "../components/dashboard-shell";
+import DashboardShell from "@/app/components/dashboard-shell";
 import { getDowntimeEvents, getMachines, getProductionRecords } from "@/lib/demo-data";
 
 function formatDateTime(timestamp: string) {
@@ -14,12 +13,6 @@ function formatDateTime(timestamp: string) {
 }
 
 export default function ProductionMonitoring() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const machines = getMachines();
   const records = getProductionRecords();
   const events = getDowntimeEvents();
@@ -33,8 +26,6 @@ export default function ProductionMonitoring() {
 
   return (
     <DashboardShell>
-
-        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12">
           <div className="mx-auto max-w-7xl">
             
             {/* Header Area */}
@@ -169,7 +160,7 @@ export default function ProductionMonitoring() {
                               {record.cycleTimeSeconds}s
                             </td>
                             <td className="py-3.5 text-right text-xs text-slate-400">
-                              {mounted ? formatDateTime(record.timestamp) : "---"}
+                              {formatDateTime(record.timestamp)}
                             </td>
                           </tr>
                         );
@@ -209,7 +200,7 @@ export default function ProductionMonitoring() {
 
                         <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
                           <span>
-                            {mounted ? `${formatDateTime(event.start)} → ${formatDateTime(event.end)}` : "---"}
+                            {`${formatDateTime(event.start)} → ${formatDateTime(event.end)}`}
                           </span>
                           <span className="font-bold text-amber-600">
                             {minutes}m
@@ -224,7 +215,6 @@ export default function ProductionMonitoring() {
             </div>
 
           </div>
-          </main>
       </DashboardShell>
   
   );

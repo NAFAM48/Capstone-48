@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import DashboardShell from "../components/dashboard-shell";
+import DashboardShell from "@/app/components/dashboard-shell";
 import { summarizeByMachine } from "@/lib/oee";
 import { getDowntimeEvents, getMachines, getProductionRecords } from "@/lib/demo-data";
 
