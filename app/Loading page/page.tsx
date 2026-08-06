@@ -47,14 +47,14 @@ export default function LoadingPage() {
 
                 <h1 className="text-5xl font-black text-blue-900">
 
-                    PlayForge
+                    NAFAM
 
                 </h1>
 
 
                 <p className="text-gray-500 tracking-[0.3em] mb-8">
 
-                    INDUSTRIES
+                    Toy Factory
 
                 </p>
 
