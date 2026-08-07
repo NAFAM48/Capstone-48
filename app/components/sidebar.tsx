@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuthStore } from "@/store/auth";
+import { normalizeRole } from "@/lib/roles";
 
 const navItems = [
   { 
@@ -89,6 +91,16 @@ export default function Sidebar({
   userRole = "Factory Manager" 
 }: SidebarProps) {
   const pathname = usePathname();
+
+  // Read persisted auth state when available
+  const authUser = useAuthStore((s) => s.user);
+  const authRole = useAuthStore((s) => s.role);
+  if (authUser) {
+    userName = authUser;
+  }
+  if (authRole) {
+    userRole = normalizeRole(authRole);
+  }
 
   // Automatically compute initials from the user's name
   const userInitials = userName

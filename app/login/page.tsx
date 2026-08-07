@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth";
+import { createSessionToken } from "@/lib/auth";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -9,29 +13,88 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const setAuth = useAuthStore((s) => s.setAuth);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setLoading(true);
 
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    if (!apiUrl) {
+      setError("Missing API base URL.");
+      setLoading(false);
+      "use client";
 
-    const result = await response.json();
-    setLoading(false);
+      import { useState } from "react";
+      import { useRouter } from "next/navigation";
+      import { useAuthStore } from "@/store/auth";
+      import { normalizeRole } from "@/lib/roles";
 
-    if (!response.ok) {
-      setError(result.error ?? "Failed to sign in.");
-      return;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      export default function LoginPage() {
+        const [email, setEmail] = useState("");
+        const [password, setPassword] = useState("");
+        const [error, setError] = useState<string | null>(null);
+        const [loading, setLoading] = useState(false);
+        const router = useRouter();
+        const setAuth = useAuthStore((s) => s.setAuth);
+
+        async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+          event.preventDefault();
+          setError(null);
+          setLoading(true);
+
+          if (!apiUrl) {
+            setError("Missing API base URL.");
+            setLoading(false);
+            return;
+          }
+
+          const response = await fetch(`${apiUrl}/auth/signin`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          }).catch(() => null as Response | null);
+
+          const result = response ? await response.json().catch(() => ({})) : {};
+          setLoading(false);
+
+          if (!response || !response.ok) {
+            setError(result.error ?? "Failed to sign in.");
+            return;
+          }
+
+          const token = result.token ?? result.accessToken;
+          const rawRole = result.role ?? result.user?.role ?? "Viewer";
+          const role = normalizeRole(rawRole);
+
+          if (!token) {
+            setError("Sign-in succeeded but no token was returned.");
+            return;
+          }
+
+          // Persist to cookie (middleware reads cookies) and local store
+          const cookieOptions = "; Path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
+          document.cookie = `nafam_token=${token}${cookieOptions}`;
+          document.cookie = `nafam_role=${encodeURIComponent(role)}${cookieOptions}`;
+
+          // Update client-side persisted store
+          setAuth(token, role, email);
+          window.localStorage.setItem("nafam_token", token);
+          window.localStorage.setItem("nafam_role", role);
+          window.localStorage.setItem("nafam_user", email);
+
+          router.push("/dashboard");
+        }
+      setError(
+        err instanceof Error && err.message
+          ? `Network error: ${err.message}`
+          : "Could not reach the server. Please check your connection."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    window.localStorage.setItem("nafam_token", result.token);
-    window.localStorage.setItem("nafam_role", result.role);
-    router.push("/dashboard");
   }
 
   return (
@@ -130,6 +193,13 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
+
+            <div className="mt-4 text-center text-sm text-slate-600">
+              Don&apos;t have an account?{' '}
+              <a href="/signup" className="font-semibold text-blue-700 hover:text-blue-800">
+                Sign up
+              </a>
+            </div>
 
             {/* Demo Credentials Box */}
             <div className="mt-8 rounded-2xl border border-slate-200/60 bg-white/40 p-4">

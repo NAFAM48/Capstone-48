@@ -1,3 +1,20 @@
+function resolveApiUrl(input: RequestInfo) {
+  if (typeof input !== "string") {
+    return input;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (!baseUrl) {
+    return input;
+  }
+
+  if (input.startsWith("/") && !input.startsWith("//")) {
+    return `${baseUrl}${input}`;
+  }
+
+  return input;
+}
+
 export async function apiFetch<T>(input: RequestInfo, init: RequestInit = {}) {
   if (typeof window === "undefined") {
     throw new Error("apiFetch may only be used in the browser.");
@@ -17,7 +34,8 @@ export async function apiFetch<T>(input: RequestInfo, init: RequestInit = {}) {
     }
   }
 
-  const response = await fetch(input, { ...init, headers, credentials: "same-origin" });
+  const url = resolveApiUrl(input);
+  const response = await fetch(url, { ...init, headers, credentials: "same-origin" });
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
