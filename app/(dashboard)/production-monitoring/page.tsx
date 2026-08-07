@@ -1,7 +1,9 @@
 ﻿"use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/app/components/dashboard-shell";
-import { getDowntimeEvents, getMachines, getProductionRecords } from "@/lib/demo-data";
+import type { DowntimeEvent, Machine, ProductionRecord } from "@/lib/demo-data";
+import { apiFetch } from "@/lib/api";
 
 function formatDateTime(timestamp: string) {
   return new Date(timestamp).toLocaleString(undefined, {
@@ -13,9 +15,38 @@ function formatDateTime(timestamp: string) {
 }
 
 export default function ProductionMonitoring() {
-  const machines = getMachines();
-  const records = getProductionRecords();
-  const events = getDowntimeEvents();
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [records, setRecords] = useState<ProductionRecord[]>([]);
+  const [events, setEvents] = useState<DowntimeEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ machines: Machine[]; records: ProductionRecord[]; events: DowntimeEvent[] }>("/api/machines")
+      .then((data) => {
+        setMachines(data.machines);
+        setRecords(data.records);
+        setEvents(data.events);
+      })
+      .catch((err) => setError(err?.message ?? "Unable to load production data."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-slate-600">Loading production telemetry…</div>
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-red-600">{error}</div>
+      </DashboardShell>
+    );
+  }
 
   const totalUnits = records.reduce((sum, record) => sum + record.unitsProduced, 0);
   const totalDefects = records.reduce((sum, record) => sum + record.defectiveUnits, 0);

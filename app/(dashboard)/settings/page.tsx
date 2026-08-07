@@ -1,10 +1,37 @@
 ﻿"use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/app/components/dashboard-shell";
-import { getMachines } from "@/lib/demo-data";
+import type { Machine } from "@/lib/demo-data";
+import { apiFetch } from "@/lib/api";
 
 export default function Settings() {
-  const machines = getMachines();
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ machines: Machine[] }>("/api/machines")
+      .then((data) => setMachines(data.machines))
+      .catch((err) => setError(err?.message ?? "Unable to load machines."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-slate-600">Loading settings…</div>
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-red-600">{error}</div>
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell>
