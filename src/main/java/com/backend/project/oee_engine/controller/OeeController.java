@@ -26,4 +26,4 @@ public class OeeController {
 
         return oeeService.calculateOEE(availability, performance, quality);
     }
-}
+}git
