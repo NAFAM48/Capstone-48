@@ -6,6 +6,26 @@ const users: Record<string, { password: string; role: Role }> = {
   "viewer@nafam.com": { password: "demo", role: "Viewer" },
 };
 
+function base64Encode(value: string) {
+  if (typeof Buffer !== "undefined" && typeof Buffer.from === "function") {
+    return Buffer.from(value, "utf8").toString("base64");
+  }
+  if (typeof globalThis.btoa === "function") {
+    return globalThis.btoa(value);
+  }
+  throw new Error("No base64 encoder available.");
+}
+
+function base64Decode(value: string) {
+  if (typeof Buffer !== "undefined" && typeof Buffer.from === "function") {
+    return Buffer.from(value, "base64").toString("utf8");
+  }
+  if (typeof globalThis.atob === "function") {
+    return globalThis.atob(value);
+  }
+  throw new Error("No base64 decoder available.");
+}
+
 export function verifyLogin(email: string, password: string) {
   const normalized = email.trim().toLowerCase();
   const user = users[normalized];
@@ -16,12 +36,12 @@ export function verifyLogin(email: string, password: string) {
 }
 
 export function createSessionToken(role: Role) {
-  return Buffer.from(JSON.stringify({ role, issuedAt: Date.now() })).toString("base64");
+  return base64Encode(JSON.stringify({ role, issuedAt: Date.now() }));
 }
 
 export function parseSessionToken(token: string) {
   try {
-    const payload = Buffer.from(token, "base64").toString("utf8");
+    const payload = base64Decode(token);
     const parsed = JSON.parse(payload) as { role: Role; issuedAt: number };
     if (!parsed?.role) {
       return null;

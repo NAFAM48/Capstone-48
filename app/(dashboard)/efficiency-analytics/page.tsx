@@ -1,18 +1,41 @@
 ﻿"use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/app/components/dashboard-shell";
-import { getFactoryOverview } from "@/lib/oee";
-import { getDowntimeEvents, getMachines, getProductionRecords } from "@/lib/demo-data";
+import type { FactoryOverview } from "@/lib/oee";
+import { apiFetch } from "@/lib/api";
 
 function formatPercent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
 export default function EfficiencyAnalytics() {
-  const machines = getMachines();
-  const records = getProductionRecords();
-  const events = getDowntimeEvents();
-  const overview = getFactoryOverview(machines, records, events);
+  const [overview, setOverview] = useState<FactoryOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ overview: FactoryOverview }>("/api/oee")
+      .then((data) => setOverview(data.overview))
+      .catch((err) => setError(err?.message ?? "Unable to load analytics."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-slate-600">Loading efficiency analytics…</div>
+      </DashboardShell>
+    );
+  }
+
+  if (error || !overview) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-red-600">{error ?? "Unable to load analytics."}</div>
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell>

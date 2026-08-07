@@ -1,19 +1,50 @@
 ﻿"use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/app/components/dashboard-shell";
 import { summarizeByMachine } from "@/lib/oee";
-import { getDowntimeEvents, getMachines, getProductionRecords } from "@/lib/demo-data";
+import type { DowntimeEvent, Machine, ProductionRecord } from "@/lib/demo-data";
+import { apiFetch } from "@/lib/api";
 
 function formatPercent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
 export default function MachineAnalytics() {
-  const machines = getMachines();
-  const records = getProductionRecords();
-  const events = getDowntimeEvents();
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [records, setRecords] = useState<ProductionRecord[]>([]);
+  const [events, setEvents] = useState<DowntimeEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ machines: Machine[]; records: ProductionRecord[]; events: DowntimeEvent[] }>("/api/machines")
+      .then((data) => {
+        setMachines(data.machines);
+        setRecords(data.records);
+        setEvents(data.events);
+      })
+      .catch((err) => setError(err?.message ?? "Unable to load machine analytics."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-slate-600">Loading machine analytics…</div>
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-red-600">{error}</div>
+      </DashboardShell>
+    );
+  }
+
   const machineSummaries = summarizeByMachine(machines, records, events);
-  
   const activeCount = machines.filter((machine) => machine.status === "Running").length;
   const downCount = machines.filter((machine) => machine.status === "Down").length;
   const idleCount = machines.filter((machine) => machine.status === "Idle").length;
