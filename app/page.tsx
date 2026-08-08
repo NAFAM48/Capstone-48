@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { type SyntheticEvent, useState } from 'react';
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8080';
@@ -144,7 +145,6 @@ export default function LoginPage() {
             <p>Machine Analytics</p>
             <p>Factory Performance</p>
           </div>
-        </section>
 
         {/* Right Section */}
         <section className="p-8 sm:p-10">
@@ -218,10 +218,12 @@ export default function LoginPage() {
               <div className="flex h-5 w-5 items-center justify-center">
                 <Image src="/apple-logo.svg" alt="Apple logo" width={18} height={18} />
               </div>
-            </div>
+              <span>Continue with Apple</span>
+            </button>
           </div>
           
-        </div>
+        </section>
+      </div>
       </main>
     </>
   );
