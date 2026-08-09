@@ -1,8 +1,9 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import DashboardShell from "../components/dashboard-shell";
-import { getDowntimeEvents, getMachines, getProductionRecords } from "@/lib/demo-data";
+import DashboardShell from "@/app/components/dashboard-shell";
+import type { DowntimeEvent, Machine, ProductionRecord } from "@/lib/demo-data";
+import { apiFetch } from "@/lib/api";
 
 function formatDateTime(timestamp: string) {
   return new Date(timestamp).toLocaleString(undefined, {
@@ -14,15 +15,38 @@ function formatDateTime(timestamp: string) {
 }
 
 export default function ProductionMonitoring() {
-  const [mounted, setMounted] = useState(false);
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [records, setRecords] = useState<ProductionRecord[]>([]);
+  const [events, setEvents] = useState<DowntimeEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    apiFetch<{ machines: Machine[]; records: ProductionRecord[]; events: DowntimeEvent[] }>("/api/machines")
+      .then((data) => {
+        setMachines(data.machines);
+        setRecords(data.records);
+        setEvents(data.events);
+      })
+      .catch((err) => setError(err?.message ?? "Unable to load production data."))
+      .finally(() => setLoading(false));
   }, []);
 
-  const machines = getMachines();
-  const records = getProductionRecords();
-  const events = getDowntimeEvents();
+  if (loading) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-slate-600">Loading production telemetry…</div>
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-red-600">{error}</div>
+      </DashboardShell>
+    );
+  }
 
   const totalUnits = records.reduce((sum, record) => sum + record.unitsProduced, 0);
   const totalDefects = records.reduce((sum, record) => sum + record.defectiveUnits, 0);
@@ -33,8 +57,6 @@ export default function ProductionMonitoring() {
 
   return (
     <DashboardShell>
-
-        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12">
           <div className="mx-auto max-w-7xl">
             
             {/* Header Area */}
@@ -169,7 +191,7 @@ export default function ProductionMonitoring() {
                               {record.cycleTimeSeconds}s
                             </td>
                             <td className="py-3.5 text-right text-xs text-slate-400">
-                              {mounted ? formatDateTime(record.timestamp) : "---"}
+                              {formatDateTime(record.timestamp)}
                             </td>
                           </tr>
                         );
@@ -209,7 +231,7 @@ export default function ProductionMonitoring() {
 
                         <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
                           <span>
-                            {mounted ? `${formatDateTime(event.start)} → ${formatDateTime(event.end)}` : "---"}
+                            {`${formatDateTime(event.start)} → ${formatDateTime(event.end)}`}
                           </span>
                           <span className="font-bold text-amber-600">
                             {minutes}m
@@ -224,7 +246,6 @@ export default function ProductionMonitoring() {
             </div>
 
           </div>
-          </main>
       </DashboardShell>
   
   );

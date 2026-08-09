@@ -1,16 +1,31 @@
 ﻿import Link from "next/link";
-import DashboardShell from "../components/dashboard-shell";
+import Sidebar from "@/app/components/sidebar";
 
 export default function Dashboard() {
   return (
     <>
       <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         @keyframes shimmer {
           100% { transform: translateX(100%); }
         }
+        .animate-fade-up { 
+          opacity: 0;
+          animation: fadeUp 0.5s ease-out forwards; 
+        }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
       `}</style>
 
-      <DashboardShell>
+      <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans">
+        {/* Assuming Sidebar handles its own fixed width and mobile responsiveness */}
+        <Sidebar />
+
+        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 md:ml-72">
           
           <div className="mx-auto max-w-7xl">
             {/* Header Area */}
@@ -218,7 +233,8 @@ export default function Dashboard() {
             </div>
 
           </div>
-      </DashboardShell>
+        </main>
+      </div>
     </>
   );
 }
