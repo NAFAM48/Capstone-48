@@ -1,9 +1,35 @@
-﻿"use client";
+"use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth";
-import { normalizeRole } from "@/lib/roles";
+import { signOut } from "@/lib/signout";
+
+function UnreadBadge() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem("nafam_token");
+    fetch("/api/notifications/unread", {
+      headers: { Authorization: `Bearer ${token ?? ""}` },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setCount(data?.notifications?.length ?? 0))
+      .catch(() => setCount(0));
+  }, []);
+
+  if (count === 0) {
+    return null;
+  }
+
+  return (
+    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[0.65rem] font-bold text-white">
+      {count}
+    </span>
+  );
+}
 
 const navItems = [
   { 
@@ -86,29 +112,34 @@ interface SidebarProps {
   userRole?: string;
 }
 
-export default function Sidebar({ 
-  userName = "Naomi", 
-  userRole = "Factory Manager" 
-}: SidebarProps) {
+export default function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+  const storeUser = useAuthStore((s) => s.user);
+  const storeRole = useAuthStore((s) => s.role);
 
-  // Read persisted auth state when available
-  const authUser = useAuthStore((s) => s.user);
-  const authRole = useAuthStore((s) => s.role);
-  if (authUser) {
-    userName = authUser;
-  }
-  if (authRole) {
-    userRole = normalizeRole(authRole);
-  }
+  const resolvedName = userName ?? storeUser ?? "User";
+  const resolvedRole = userRole ?? storeRole ?? "—";
 
-  // Automatically compute initials from the user's name
-  const userInitials = userName
+  const userInitials = resolvedName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const handleSignOut = async () => {
+    if (signingOut) {
+      return;
+    }
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      router.replace("/");
+    }
+  };
 
   return (
     <>
@@ -140,11 +171,13 @@ export default function Sidebar({
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 py-6 md:px-8 md:py-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-lg shadow-blue-900/50" style={{ backgroundImage: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}>
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
+            <Image
+              src="/nafam-logo.png"
+              alt="NAFAM logo"
+              width={1536}
+              height={1024}
+              className="h-10 w-10 rounded-xl shadow-lg shadow-blue-900/50 object-cover"
+            />
             <div>
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.3em] text-slate-500">NAFAM</p>
               <h1 className="text-lg font-black tracking-tight text-white">Toy Factory</h1>
@@ -187,6 +220,7 @@ export default function Sidebar({
                   </div>
                   
                   <span>{item.label}</span>
+                  {item.href === "/notifications" && <UnreadBadge />}
                 </Link>
               );
             })}
@@ -200,10 +234,37 @@ export default function Sidebar({
               {userInitials}
             </div>
             <div className="overflow-hidden">
-              <p className="truncate text-sm font-medium text-slate-200">{userName}</p>
-              <p className="truncate text-xs text-slate-500">{userRole}</p>
+              <p className="truncate text-sm font-medium text-slate-200">{resolvedName}</p>
+              <p className="truncate text-xs text-slate-500">{resolvedRole}</p>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-60"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            {signingOut ? "Signing out…" : "Sign Out"}
+          </button>
+        </div>
+
+        {/* Sign Out (Mobile Only) */}
+        <div className="border-t border-slate-800 p-4 md:hidden">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-60"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            {signingOut ? "Signing out…" : "Sign Out"}
+          </button>
         </div>
 
       </aside>

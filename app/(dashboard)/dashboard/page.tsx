@@ -1,7 +1,108 @@
-﻿import Link from "next/link";
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import Sidebar from "@/app/components/sidebar";
+import { apiFetch } from "@/lib/api";
+import type { Machine, ProductionRecord, DowntimeEvent } from "@/lib/demo-data";
+import type { FactoryOverview } from "@/lib/oee";
+
+function formatPercent(value: number) {
+  return `${Math.round(value * 100)}%`;
+}
 
 export default function Dashboard() {
+  const [data, setData] = useState<{
+    machines: Machine[];
+    records: ProductionRecord[];
+    events: DowntimeEvent[];
+    overview: FactoryOverview | null;
+  }>({
+    machines: [],
+    records: [],
+    events: [],
+    overview: null,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch<{ machines: Machine[]; records: ProductionRecord[]; events: DowntimeEvent[] }>("/api/machines"),
+      apiFetch<{ overview: FactoryOverview; source?: "backend" | "local" }>("/api/oee", { method: "POST" }),
+    ])
+      .then(([machinesData, oeeData]) => {
+        setData({
+          machines: machinesData.machines,
+          records: machinesData.records,
+          events: machinesData.events,
+          overview: oeeData.overview,
+        });
+      })
+      .catch((err) => {
+        setError(err?.message ?? "Failed to load dashboard data.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans">
+        <Sidebar />
+        <main className="flex-1 flex items-center justify-center p-8 md:ml-72">
+          <div className="text-slate-600">Loading dashboard overview…</div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !data.overview) {
+    return (
+      <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans">
+        <Sidebar />
+        <main className="flex-1 flex items-center justify-center p-8 md:ml-72 text-red-600">
+          {error ?? "Unable to load dashboard details."}
+        </main>
+      </div>
+    );
+  }
+
+  const { machines, events, overview } = data;
+
+  const totalProduction = overview.overall.unitsProduced;
+  const activeMachinesCount = machines.filter((m) => m.status === "Running").length;
+  const totalMachinesCount = machines.length;
+
+  const oeeValue = overview.overall.oee;
+  const qualityValue = overview.overall.quality;
+
+  // Calculate target progress against a daily goal of 2000 toys
+  const dailyGoal = 2000;
+  const targetPercent = Math.min(100, Math.round((totalProduction / dailyGoal) * 1000) / 10);
+
+  // Derive dynamic activities from recent downtime events or machine states
+  const recentActivities: Array<{ message: string; time: string; type: "up" | "down" }> = events
+    .slice(-4)
+    .reverse()
+    .map((event) => {
+      const machine = machines.find((m) => m.id === event.machineId);
+      return {
+        message: `Machine "${machine?.name ?? "Asset"}" reported downtime due to: ${event.reason}.`,
+        time: event.start ? new Date(event.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Recently",
+        type: "down" as const,
+      };
+    });
+
+  if (recentActivities.length === 0) {
+    recentActivities.push({
+      message: "All production lines synchronized successfully. Operating at peak efficiency.",
+      time: "Just now",
+      type: "up" as const,
+    });
+  }
+
   return (
     <>
       <style>{`
@@ -22,7 +123,6 @@ export default function Dashboard() {
       `}</style>
 
       <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans">
-        {/* Assuming Sidebar handles its own fixed width and mobile responsiveness */}
         <Sidebar />
 
         <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 md:ml-72">
@@ -68,8 +168,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-4 flex items-baseline gap-2">
-                  <p className="text-3xl font-bold text-slate-900">1,450</p>
-                  <p className="text-sm font-medium text-emerald-600">+12%</p>
+                  <p className="text-3xl font-bold text-slate-900">{totalProduction.toLocaleString()}</p>
                 </div>
                 <p className="mt-1 text-xs text-slate-400">Toys produced today</p>
               </div>
@@ -86,7 +185,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-4 flex items-baseline gap-2">
-                  <p className="text-3xl font-bold text-slate-900">24<span className="text-lg text-slate-400">/25</span></p>
+                  <p className="text-3xl font-bold text-slate-900">{activeMachinesCount}<span className="text-lg text-slate-400">/{totalMachinesCount}</span></p>
                 </div>
                 <p className="mt-1 text-xs text-slate-400">Machines running</p>
               </div>
@@ -102,8 +201,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-4 flex items-baseline gap-2">
-                  <p className="text-3xl font-bold text-slate-900">96%</p>
-                  <p className="text-sm font-medium text-slate-500">-1%</p>
+                  <p className="text-3xl font-bold text-slate-900">{formatPercent(oeeValue)}</p>
                 </div>
                 <p className="mt-1 text-xs text-slate-400">Production efficiency</p>
               </div>
@@ -119,7 +217,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-4 flex items-baseline gap-2">
-                  <p className="text-3xl font-bold text-slate-900">98%</p>
+                  <p className="text-3xl font-bold text-slate-900">{formatPercent(qualityValue)}</p>
                 </div>
                 <p className="mt-1 text-xs text-slate-400">Pass rate across all lines</p>
               </div>
@@ -133,18 +231,18 @@ export default function Dashboard() {
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-lg font-bold text-slate-900">Today&apos;s Target</h2>
-                  <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">72.5% Complete</span>
+                  <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">{targetPercent}% Complete</span>
                 </div>
                 
                 <div className="mb-2 flex justify-between text-sm">
-                  <span className="font-semibold text-slate-700">1,450 Toys</span>
-                  <span className="text-slate-500">Goal: 2,000</span>
+                  <span className="font-semibold text-slate-700">{totalProduction.toLocaleString()} Toys</span>
+                  <span className="text-slate-500">Goal: {dailyGoal.toLocaleString()}</span>
                 </div>
                 
                 <div className="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
                   <div 
                     className="absolute left-0 top-0 h-full rounded-full bg-linear-to-r from-blue-600 to-blue-400 transition-all duration-1000 ease-out" 
-                    style={{ width: "72.5%" }}
+                    style={{ width: `${targetPercent}%` }}
                   >
                     <div className="absolute inset-0 w-full animate-[shimmer_2s_infinite] bg-white/20"></div>
                   </div>
@@ -190,45 +288,27 @@ export default function Dashboard() {
               <h2 className="mb-6 text-lg font-bold text-slate-900">Recent Activities</h2>
               
               <ul className="space-y-4">
-                <li className="flex items-start gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">Production line synchronized successfully.</p>
-                    <p className="text-xs text-slate-500">Just now</p>
-                  </div>
-                </li>
-
-                <li className="flex items-start gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">Machine 04 operating normally.</p>
-                    <p className="text-xs text-slate-500">10 mins ago</p>
-                  </div>
-                </li>
-
-                <li className="flex items-start gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">Production target is on track.</p>
-                    <p className="text-xs text-slate-500">1 hour ago</p>
-                  </div>
-                </li>
-                
-                <li className="flex items-start gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">Quality standards maintained across all shifts.</p>
-                    <p className="text-xs text-slate-500">2 hours ago</p>
-                  </div>
-                </li>
+                {recentActivities.map((act, index) => (
+                  <li key={index} className="flex items-start gap-4 animate-fade-up">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                      act.type === "up" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
+                    }`}>
+                      {act.type === "up" ? (
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">{act.message}</p>
+                      <p className="text-xs text-slate-500">{act.time}</p>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </div>
 

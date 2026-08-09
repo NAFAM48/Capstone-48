@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import DashboardShell from "@/app/components/dashboard-shell";
 import type { DowntimeEvent, Machine, ProductionRecord } from "@/lib/demo-data";
 import { apiFetch } from "@/lib/api";
@@ -14,15 +14,29 @@ function formatDateTime(timestamp: string) {
   });
 }
 
+type MonitoringData = {
+  machines: Machine[];
+  records: ProductionRecord[];
+  events: DowntimeEvent[];
+};
+
 export default function ProductionMonitoring() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [records, setRecords] = useState<ProductionRecord[]>([]);
   const [events, setEvents] = useState<DowntimeEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [readingMachineId, setReadingMachineId] = useState("");
+  const [readingOutput, setReadingOutput] = useState("");
+  const [readingTemp, setReadingTemp] = useState("");
+  const [readingTime, setReadingTime] = useState("");
+  const [readingMessage, setReadingMessage] = useState<string | null>(null);
+
+  const loadData = async () =>
+    apiFetch<MonitoringData>("/api/machines");
 
   useEffect(() => {
-    apiFetch<{ machines: Machine[]; records: ProductionRecord[]; events: DowntimeEvent[] }>("/api/machines")
+    loadData()
       .then((data) => {
         setMachines(data.machines);
         setRecords(data.records);
@@ -31,6 +45,32 @@ export default function ProductionMonitoring() {
       .catch((err) => setError(err?.message ?? "Unable to load production data."))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleReadingSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setReadingMessage(null);
+    try {
+      await apiFetch("/api/readings", {
+        method: "POST",
+        body: JSON.stringify({
+          machineId: readingMachineId,
+          outputCount: Number(readingOutput),
+          temperature: readingTemp === "" ? null : Number(readingTemp),
+          timestamp: readingTime ? new Date(readingTime).toISOString() : undefined,
+        }),
+      });
+      setReadingMessage("Sensor reading recorded successfully.");
+      setReadingOutput("");
+      setReadingTemp("");
+      setReadingTime("");
+      const data = await loadData();
+      setMachines(data.machines);
+      setRecords(data.records);
+      setEvents(data.events);
+    } catch (err) {
+      setReadingMessage((err as Error)?.message ?? "Unable to record sensor reading.");
+    }
+  };
 
   if (loading) {
     return (
@@ -241,6 +281,85 @@ export default function ProductionMonitoring() {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Log Sensor Reading */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm animate-fade-up delay-300 lg:col-span-3">
+                <div className="mb-5">
+                  <h2 className="text-lg font-bold text-slate-900">Log Sensor Reading</h2>
+                  <p className="text-xs text-slate-500">Record new telemetry for a machine (POST /api/sensor-readings)</p>
+                </div>
+
+                <form onSubmit={handleReadingSubmit} className="flex flex-col gap-4 lg:flex-row lg:items-end">
+                  <div className="flex-1">
+                    <label htmlFor="readingMachine" className="block text-sm font-semibold text-slate-700">Machine</label>
+                    <select
+                      id="readingMachine"
+                      value={readingMachineId}
+                      onChange={(e) => setReadingMachineId(e.target.value)}
+                      required
+                      className="mt-2 block w-full rounded-xl border border-slate-300 bg-white/60 px-4 py-3 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    >
+                      <option value="" disabled>Select a machine</option>
+                      {machines.map((machine) => (
+                        <option key={machine.id} value={machine.id}>
+                          {machine.name} ({machine.id})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex-1">
+                    <label htmlFor="readingOutput" className="block text-sm font-semibold text-slate-700">Output Count</label>
+                    <input
+                      id="readingOutput"
+                      type="number"
+                      min="0"
+                      value={readingOutput}
+                      onChange={(e) => setReadingOutput(e.target.value)}
+                      required
+                      placeholder="e.g. 76"
+                      className="mt-2 block w-full rounded-xl border border-slate-300 bg-white/60 px-4 py-3 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+                  </div>
+
+                  <div className="flex-1">
+                    <label htmlFor="readingTemp" className="block text-sm font-semibold text-slate-700">Temperature (°C)</label>
+                    <input
+                      id="readingTemp"
+                      type="number"
+                      step="any"
+                      value={readingTemp}
+                      onChange={(e) => setReadingTemp(e.target.value)}
+                      placeholder="Optional"
+                      className="mt-2 block w-full rounded-xl border border-slate-300 bg-white/60 px-4 py-3 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+                  </div>
+
+                  <div className="flex-1">
+                    <label htmlFor="readingTime" className="block text-sm font-semibold text-slate-700">Timestamp</label>
+                    <input
+                      id="readingTime"
+                      type="datetime-local"
+                      value={readingTime}
+                      onChange={(e) => setReadingTime(e.target.value)}
+                      className="mt-2 block w-full rounded-xl border border-slate-300 bg-white/60 px-4 py-3 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                  >
+                    Record Reading
+                  </button>
+                </form>
+
+                {readingMessage && (
+                  <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    {readingMessage}
+                  </div>
+                )}
               </div>
 
             </div>

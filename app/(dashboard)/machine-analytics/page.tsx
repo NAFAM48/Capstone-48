@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardShell from "@/app/components/dashboard-shell";
-import { summarizeByMachine } from "@/lib/oee";
+import { summarizeByMachine, type MachineSummary } from "@/lib/oee";
 import type { DowntimeEvent, Machine, ProductionRecord } from "@/lib/demo-data";
 import { apiFetch } from "@/lib/api";
 
@@ -16,6 +16,8 @@ export default function MachineAnalytics() {
   const [events, setEvents] = useState<DowntimeEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     apiFetch<{ machines: Machine[]; records: ProductionRecord[]; events: DowntimeEvent[] }>("/api/machines")
@@ -27,6 +29,36 @@ export default function MachineAnalytics() {
       .catch((err) => setError(err?.message ?? "Unable to load machine analytics."))
       .finally(() => setLoading(false));
   }, []);
+
+  const loadData = async () => {
+    const data = await apiFetch<{ machines: Machine[]; records: ProductionRecord[]; events: DowntimeEvent[] }>(
+      "/api/machines"
+    );
+    setMachines(data.machines);
+    setRecords(data.records);
+    setEvents(data.events);
+  };
+
+  const deleteMachine = async (summary: MachineSummary) => {
+    if (
+      !window.confirm(
+        `Delete machine "${summary.machine.name}" (${summary.machine.id})?\n\nThis removes the machine and its downtime events from the backend. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setDeletingId(summary.machine.id);
+    setActionMessage(null);
+    try {
+      await apiFetch(`/api/machines/${summary.machine.id}`, { method: "DELETE" });
+      setActionMessage({ type: "success", text: `Machine "${summary.machine.name}" deleted.` });
+      await loadData();
+    } catch (err) {
+      setActionMessage({ type: "error", text: (err as Error)?.message ?? "Unable to delete machine." });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -78,6 +110,25 @@ export default function MachineAnalytics() {
                 {activeCount} / {machines.length} Active Lines
               </div>
             </header>
+
+            {actionMessage && (
+              <div
+                className={`mb-6 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-sm shadow-sm ${
+                  actionMessage.type === "success"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-rose-200 bg-rose-50 text-rose-800"
+                }`}
+              >
+                <span>{actionMessage.text}</span>
+                <button
+                  type="button"
+                  onClick={() => setActionMessage(null)}
+                  className="text-xs font-bold uppercase tracking-wide opacity-70 hover:opacity-100"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
 
             {/* Top KPI Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 animate-fade-up delay-100">
@@ -154,6 +205,7 @@ export default function MachineAnalytics() {
                       <th className="pb-3 pt-2">Shift</th>
                       <th className="pb-3 pt-2">Status</th>
                       <th className="pb-3 pt-2 text-right">OEE Score</th>
+                      <th className="pb-3 pt-2 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -197,6 +249,26 @@ export default function MachineAnalytics() {
                           <td className="py-3.5 text-right font-bold text-slate-900">
                             {formatPercent(row.summary.oee)}
                           </td>
+                          <td className="py-3.5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => deleteMachine(row)}
+                              disabled={deletingId === row.machine.id}
+                              title={`Delete ${row.machine.name}`}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                            >
+                              {deletingId === row.machine.id ? (
+                                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                              ) : (
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              )}
+                              {deletingId === row.machine.id ? "Deleting" : "Delete"}
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -214,11 +286,24 @@ export default function MachineAnalytics() {
                       <h3 className="text-base font-bold text-slate-900">{row.machine.name}</h3>
                       <p className="text-xs text-slate-500">{row.machine.line} · {row.machine.shift}</p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-black text-slate-900">
-                        {formatPercent(row.summary.oee)}
-                      </span>
-                      <p className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-400">Overall OEE</p>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <span className="text-2xl font-black text-slate-900">
+                          {formatPercent(row.summary.oee)}
+                        </span>
+                        <p className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-400">Overall OEE</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteMachine(row)}
+                        disabled={deletingId === row.machine.id}
+                        title={`Delete ${row.machine.name}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
 

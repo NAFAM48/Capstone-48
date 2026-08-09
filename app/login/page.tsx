@@ -23,70 +23,52 @@ export default function LoginPage() {
     if (!apiUrl) {
       setError("Missing API base URL.");
       setLoading(false);
-      "use client";
+      return;
+    }
 
-      import { useState } from "react";
-      import { useRouter } from "next/navigation";
-      import { useAuthStore } from "@/store/auth";
-      import { normalizeRole } from "@/lib/roles";
+    try {
+      const response = await fetch(`${apiUrl}/auth/signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      // Backend may return plain text on error
+      const contentType = response.headers.get("content-type") ?? "";
+      const result = contentType.includes("application/json")
+        ? await response.json().catch(() => ({}))
+        : { error: await response.text().catch(() => "Request failed.") };
 
-      export default function LoginPage() {
-        const [email, setEmail] = useState("");
-        const [password, setPassword] = useState("");
-        const [error, setError] = useState<string | null>(null);
-        const [loading, setLoading] = useState(false);
-        const router = useRouter();
-        const setAuth = useAuthStore((s) => s.setAuth);
+      if (!response.ok) {
+        setError(result.error ?? result.message ?? "Invalid credentials. Please try again.");
+        return;
+      }
 
-        async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-          event.preventDefault();
-          setError(null);
-          setLoading(true);
+      // Backend returns { message, email, role } — no JWT token.
+      // Generate a local session token so the rest of the app works.
+      const userEmail = result.email ?? email;
 
-          if (!apiUrl) {
-            setError("Missing API base URL.");
-            setLoading(false);
-            return;
-          }
+      // Normalise backend role strings to frontend Role type
+      const ROLE_MAP: Record<string, string> = {
+        OPERATOR: "Viewer",
+        Admin: "Admin",
+        "Plant Manager": "Plant Manager",
+        Viewer: "Viewer",
+      };
+      const role = (ROLE_MAP[result.role] ?? result.role ?? "Viewer") as import("@/lib/demo-data").Role;
+      const token = createSessionToken(role);
 
-          const response = await fetch(`${apiUrl}/auth/signin`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-          }).catch(() => null as Response | null);
+      // Keep Zustand store (persisted) and localStorage in sync
+      setAuth(token, role, userEmail);
+      // Also write to cookie so Edge Middleware can enforce role-based routing
+      document.cookie = `nafam_token=${token}; path=/; SameSite=Lax`;
 
-          const result = response ? await response.json().catch(() => ({})) : {};
-          setLoading(false);
+      window.localStorage.setItem("nafam_token", token);
+      window.localStorage.setItem("nafam_role", role);
+      window.localStorage.setItem("nafam_user", userEmail);
 
-          if (!response || !response.ok) {
-            setError(result.error ?? "Failed to sign in.");
-            return;
-          }
-
-          const token = result.token ?? result.accessToken;
-          const rawRole = result.role ?? result.user?.role ?? "Viewer";
-          const role = normalizeRole(rawRole);
-
-          if (!token) {
-            setError("Sign-in succeeded but no token was returned.");
-            return;
-          }
-
-          // Persist to cookie (middleware reads cookies) and local store
-          const cookieOptions = "; Path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
-          document.cookie = `nafam_token=${token}${cookieOptions}`;
-          document.cookie = `nafam_role=${encodeURIComponent(role)}${cookieOptions}`;
-
-          // Update client-side persisted store
-          setAuth(token, role, email);
-          window.localStorage.setItem("nafam_token", token);
-          window.localStorage.setItem("nafam_role", role);
-          window.localStorage.setItem("nafam_user", email);
-
-          router.push("/dashboard");
-        }
+      router.push("/dashboard");
+    } catch (err) {
       setError(
         err instanceof Error && err.message
           ? `Network error: ${err.message}`

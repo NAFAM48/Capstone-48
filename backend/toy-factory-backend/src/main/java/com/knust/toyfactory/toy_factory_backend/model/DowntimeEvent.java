@@ -25,15 +25,17 @@ public class DowntimeEvent {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String cause;
+    private String shift;
 
     public DowntimeEvent() {
     }
 
-    public DowntimeEvent(Machine machine, LocalDateTime startTime, LocalDateTime endTime, String cause) {
+    public DowntimeEvent(Machine machine, LocalDateTime startTime, LocalDateTime endTime, String cause, String shift) {
         this.machine = machine;
         this.startTime = startTime;
         this.endTime = endTime;
         this.cause = cause;
+        this.shift = shift;
     }
 
     public Long getId() {
@@ -74,5 +76,13 @@ public class DowntimeEvent {
 
     public void setCause(String cause) {
         this.cause = cause;
+    }
+
+    public String getShift() {
+        return shift;
+    }
+
+    public void setShift(String shift) {
+        this.shift = shift;
     }
 }

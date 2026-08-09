@@ -17,14 +17,16 @@ public class Machine {
     private String name;        // e.g. "Molding Machine 1"
     private String stage;       // e.g. "Molding", "Painting", "Assembly", "Packaging"
     private String status;      // e.g. "RUNNING", "IDLE", "DOWN"
+    private String shift;       // e.g. "A", "B", "C"
 
     public Machine() {
     }
 
-    public Machine(String name, String stage, String status) {
+    public Machine(String name, String stage, String status, String shift) {
         this.name = name;
         this.stage = stage;
         this.status = status;
+        this.shift = shift;
     }
 
     public Long getId() {
@@ -57,5 +59,13 @@ public class Machine {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getShift() {
+        return shift;
+    }
+
+    public void setShift(String shift) {
+        this.shift = shift;
     }
 }

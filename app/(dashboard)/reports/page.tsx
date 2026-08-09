@@ -1,237 +1,334 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/components/dashboard-shell";
+import type { DowntimeEvent } from "@/lib/demo-data";
+import { apiFetch } from "@/lib/api";
+
+function formatDateTime(timestamp: string) {
+  return new Date(timestamp).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function toDateTimeLocal(timestamp: string) {
+  const date = new Date(timestamp);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
 export default function Reports() {
+  const [events, setEvents] = useState<DowntimeEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ reason: "", start: "", end: "" });
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  const loadEvents = async () => {
+    const data = await apiFetch<{ events: DowntimeEvent[] }>("/api/downtime");
+    setEvents(data.events ?? []);
+  };
+
+  useEffect(() => {
+    apiFetch<{ events: DowntimeEvent[] }>("/api/downtime")
+      .then((data) => setEvents(data.events ?? []))
+      .catch((err) => setError(err?.message ?? "Unable to load reports."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const startEdit = (event: DowntimeEvent) => {
+    setActionMessage(null);
+    setEditingId(event.id);
+    setEditForm({
+      reason: event.reason,
+      start: toDateTimeLocal(event.start),
+      end: toDateTimeLocal(event.end),
+    });
+  };
+
+  const saveEdit = async (event: DowntimeEvent) => {
+    try {
+      await apiFetch(`/api/downtime/${event.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          machineId: event.machineId,
+          reason: editForm.reason,
+          start: editForm.start,
+          end: editForm.end,
+          shift: event.shift,
+        }),
+      });
+      setEditingId(null);
+      setActionMessage("Downtime event updated.");
+      await loadEvents();
+    } catch (err) {
+      setActionMessage((err as Error)?.message ?? "Unable to update downtime event.");
+    }
+  };
+
+  const deleteEvent = async (event: DowntimeEvent) => {
+    if (!window.confirm(`Delete downtime event for machine ${event.machineId}? The machine will be set back to Running.`)) {
+      return;
+    }
+    try {
+      await apiFetch(`/api/downtime/${event.id}`, { method: "DELETE" });
+      setActionMessage("Downtime event deleted.");
+      await loadEvents();
+    } catch (err) {
+      setActionMessage((err as Error)?.message ?? "Unable to delete downtime event.");
+    }
+  };
+
+  const filteredEvents = useMemo(() => {
+    const query = filter.trim().toLowerCase();
+    if (!query) {
+      return events;
+    }
+    return events.filter((event) =>
+      [event.machineId, event.line, event.shift, event.reason, event.start, event.end]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [events, filter]);
+
+  const totalDowntimeMinutes = useMemo(() => {
+    return filteredEvents.reduce((total, event) => {
+      const start = Date.parse(event.start);
+      const end = Date.parse(event.end);
+      if (Number.isNaN(start) || Number.isNaN(end)) {
+        return total;
+      }
+      return total + Math.max(0, (end - start) / 60000);
+    }, 0);
+  }, [filteredEvents]);
+
+  const exportCsv = () => {
+    const headers = ["Machine ID", "Line", "Shift", "Reason", "Start", "End"];
+    const rows = filteredEvents.map((event) => [
+      event.machineId,
+      event.line,
+      event.shift,
+      event.reason,
+      event.start,
+      event.end,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "downtime-report.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  if (loading) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-slate-600">Loading reports…</div>
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto max-w-7xl py-24 text-center text-red-600">{error}</div>
+      </DashboardShell>
+    );
+  }
+
   return (
     <DashboardShell>
-          <div className="mx-auto max-w-7xl">
-            
-            {/* Header Area */}
-            <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
-              <div>
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    NAFAM OEE Control
-                  </span>
-                </div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-                  Reports
-                </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                  View and analyze comprehensive factory performance reports and historical summaries.
-                </p>
-              </div>
-
-              {/* Status Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-600"></span>
-                </span>
-                Reports Engine Active
-              </div>
-            </header>
-
-            {/* Report Overview Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-up delay-100">
-              
-              {/* Total Production */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-500">Total Production</h3>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-3xl font-bold text-slate-900">2,000</p>
-                </div>
-                <p className="mt-1 text-xs text-slate-400">Toys Produced</p>
-              </div>
-
-              {/* Efficiency Rate */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-500">Efficiency Rate</h3>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-3xl font-bold text-slate-900">96%</p>
-                </div>
-                <p className="mt-1 text-xs text-slate-400">Overall throughput speed</p>
-              </div>
-
-              {/* Machine Performance */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-500">Machine Performance</h3>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-3xl font-bold text-slate-900">94%</p>
-                </div>
-                <p className="mt-1 text-xs text-slate-400">Asset reliability ratio</p>
-              </div>
-
-              {/* Quality Score */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-500">Quality Score</h3>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-3xl font-bold text-slate-900">98%</p>
-                </div>
-                <p className="mt-1 text-xs text-slate-400">Defect-free yield rate</p>
-              </div>
-
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
+          <div>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">NAFAM OEE Control</span>
             </div>
-
-            {/* Grid Section: Daily & Weekly Reports */}
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2 animate-fade-up delay-200">
-              
-              {/* Daily Report Summary */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900">Daily Report Summary</h2>
-                <p className="text-xs text-slate-500">Performance logs for the current operating cycle</p>
-
-                <ul className="mt-5 space-y-3">
-                  {[
-                    "Production target achieved successfully.",
-                    "All machines operated within expected limits.",
-                    "No major production disturbances detected.",
-                  ].map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 text-xs font-bold">
-                        ✓
-                      </span>
-                      <span className="text-sm font-medium text-slate-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Weekly Report Summary */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900">Weekly Report Summary</h2>
-                <p className="text-xs text-slate-500">Aggregated metrics across all operating shifts</p>
-
-                <ul className="mt-5 space-y-3">
-                  {[
-                    "Production efficiency improved by 4%.",
-                    "Machine utilization remained stable.",
-                    "Quality standards were maintained.",
-                  ].map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 text-xs font-bold">
-                        ✓
-                      </span>
-                      <span className="text-sm font-medium text-slate-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-            </div>
-
-            {/* Grid Section: Monthly Report & Production Noise Summary */}
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2 animate-fade-up delay-300">
-              
-              {/* Monthly Report Summary */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900">Monthly Report Summary</h2>
-                <p className="text-xs text-slate-500">Long-term factory trend evaluation</p>
-
-                <ul className="mt-5 space-y-3">
-                  {[
-                    "Total production targets were met.",
-                    "Factory operations remained efficient.",
-                    "Production noise levels decreased.",
-                  ].map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 text-xs font-bold">
-                        ✓
-                      </span>
-                      <span className="text-sm font-medium text-slate-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Production Noise Summary */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">Production Noise Summary</h2>
-                  <p className="text-xs text-slate-500">Acoustic telemetry overview</p>
-
-                  <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50/50 p-5">
-                    <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                      Production noise incidents remain at minimal levels with stable acoustic dampening across all lines.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Status</span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Nominal Acoustic Range
-                  </span>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Grid Section: Factory Status & Report Generation Status */}
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2 animate-fade-up">
-              
-              {/* Factory Status */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900">Factory Status</h2>
-                <p className="text-xs text-slate-500">Live operational condition</p>
-
-                <div className="mt-6 rounded-xl border border-emerald-100 bg-emerald-50/50 p-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">System Active</span>
-                  </div>
-                  <p className="text-lg font-bold text-emerald-900">
-                    Operational
-                  </p>
-                </div>
-              </div>
-
-              {/* Report Generation Status */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900">Report Generation Status</h2>
-                <p className="text-xs text-slate-500">Automated job scheduler</p>
-
-                <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50/50 p-5">
-                  <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                    All factory reports have been generated successfully and synced with the central dashboard server.
-                  </p>
-                </div>
-              </div>
-
-            </div>
-
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Reports</h1>
+            <p className="mt-1 text-sm text-slate-500">View downtime events, filter results, and export incident reports.</p>
           </div>
-      </DashboardShell>
-   
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-600"></span>
+              </span>
+              Reports Engine Active
+            </div>
+            <button
+              type="button"
+              onClick={exportCsv}
+              className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Export CSV
+            </button>
+          </div>
+        </header>
+
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Downtime Event Reports</h2>
+            <p className="text-sm text-slate-500">Events loaded from the protected downtime endpoint.</p>
+          </div>
+          <div className="space-y-1 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
+            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm">
+              <p className="font-medium text-slate-900">Filtered Events</p>
+              <p>{filteredEvents.length} event{filteredEvents.length === 1 ? "" : "s"}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm">
+              <p className="font-medium text-slate-900">Estimated Downtime</p>
+              <p>{totalDowntimeMinutes.toFixed(1)} min</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="relative block w-full sm:w-80">
+            <span className="sr-only">Search events</span>
+            <input
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              type="search"
+              placeholder="Filter by machine, line, reason, or timestamp"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            />
+          </label>
+        </div>
+
+        {actionMessage && (
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 shadow-sm">
+            <span>{actionMessage}</span>
+            <button
+              type="button"
+              onClick={() => setActionMessage(null)}
+              className="text-xs font-semibold uppercase tracking-wide text-blue-600 hover:text-blue-800"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-700">
+            <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Machine</th>
+                <th className="px-4 py-3">Line</th>
+                <th className="px-4 py-3">Shift</th>
+                <th className="px-4 py-3">Reason</th>
+                <th className="px-4 py-3">Start</th>
+                <th className="px-4 py-3">End</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {filteredEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-500">
+                    No downtime events match your filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredEvents.map((event) =>
+                  editingId === event.id ? (
+                    <tr key={event.id} className="bg-blue-50/40 transition-colors">
+                      <td className="px-4 py-3 font-medium text-slate-900">{event.machineId}</td>
+                      <td className="px-4 py-3 text-slate-600">{event.line}</td>
+                      <td className="px-4 py-3 text-slate-600">{event.shift}</td>
+                      <td className="px-4 py-3">
+                        <input
+                          value={editForm.reason}
+                          onChange={(input) => setEditForm((form) => ({ ...form, reason: input.target.value }))}
+                          placeholder="Reason"
+                          className="w-full min-w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="datetime-local"
+                          value={editForm.start}
+                          onChange={(input) => setEditForm((form) => ({ ...form, start: input.target.value }))}
+                          className="w-full min-w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="datetime-local"
+                          value={editForm.end}
+                          onChange={(input) => setEditForm((form) => ({ ...form, end: input.target.value }))}
+                          className="w-full min-w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => saveEdit(event)}
+                            className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-800"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingId(null);
+                              setActionMessage(null);
+                            }}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={event.id} className="transition-colors hover:bg-slate-50/80">
+                      <td className="px-4 py-4 font-medium text-slate-900">{event.machineId}</td>
+                      <td className="px-4 py-4 text-slate-600">{event.line}</td>
+                      <td className="px-4 py-4 text-slate-600">{event.shift}</td>
+                      <td className="px-4 py-4 text-slate-700">{event.reason}</td>
+                      <td className="px-4 py-4 text-slate-600">{formatDateTime(event.start)}</td>
+                      <td className="px-4 py-4 text-slate-600">{formatDateTime(event.end)}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEdit(event)}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteEvent(event)}
+                            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </DashboardShell>
   );
 }
