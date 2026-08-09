@@ -269,11 +269,11 @@ export default function ProductionMonitoring() {
                           </span>
                         </div>
 
-                        <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                          <span>
+                        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500">
+                          <span className="min-w-0 break-words">
                             {`${formatDateTime(event.start)} → ${formatDateTime(event.end)}`}
                           </span>
-                          <span className="font-bold text-amber-600">
+                          <span className="shrink-0 font-bold text-amber-600">
                             {minutes}m
                           </span>
                         </div>

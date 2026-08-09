@@ -23,10 +23,10 @@ export default function DashboardShell({ children }: DashboardShellProps) {
         .delay-300 { animation-delay: 300ms; }
       `}</style>
 
-      <div className="flex min-h-screen bg-slate-50 font-sans">
+      <div className="flex min-h-screen flex-col bg-slate-50 font-sans md:flex-row">
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 md:ml-72">
+        <main className="w-full min-w-0 flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 md:ml-72">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

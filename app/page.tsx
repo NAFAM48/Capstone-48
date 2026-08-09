@@ -18,7 +18,7 @@ export default function HomePage() {
             <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50/50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 backdrop-blur-sm">
               NAFAM Toy Factory
             </span>
-            <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
+            <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
               Remove noise, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-600">
                 surface truth.

@@ -166,11 +166,11 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
         }
       `}</style>
 
-      <aside className="sticky top-0 left-0 z-20 flex flex-col h-screen min-h-screen overflow-y-auto border-r border-slate-800 bg-[#0B1120] text-slate-300 w-full md:fixed md:h-screen md:w-72 md:shrink-0">
+      <aside className="sticky top-0 left-0 z-20 flex flex-col border-r border-slate-800 bg-[#0B1120] text-slate-300 w-full md:fixed md:h-screen md:min-h-screen md:w-72 md:shrink-0 md:overflow-y-auto">
         
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-6 py-6 md:px-8 md:py-8">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-4 py-4 md:px-8 md:py-8">
+          <div className="flex items-center gap-3 min-w-0">
             <Image
               src="/nafam-logo.png"
               alt="NAFAM logo"
@@ -190,8 +190,8 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
         </div>
 
         {/* Navigation Area */}
-        <nav className="no-scrollbar flex overflow-x-auto px-4 pb-4 md:block md:overflow-visible md:px-4 md:pb-8">
-          <div className="flex gap-2 md:flex-col md:space-y-1">
+        <nav className="no-scrollbar flex w-full overflow-x-auto px-4 pb-4 md:block md:overflow-visible md:px-4 md:pb-8">
+          <div className="flex w-full gap-2 md:flex-col md:space-y-1">
             {navItems.map((item, index) => {
               const isActive = pathname === item.href;
 

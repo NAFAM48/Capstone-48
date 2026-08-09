@@ -49,9 +49,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans">
+      <div className="flex min-h-screen flex-col overflow-hidden bg-slate-50 font-sans md:flex-row">
         <Sidebar />
-        <main className="flex-1 flex items-center justify-center p-8 md:ml-72">
+        <main className="w-full min-w-0 flex-1 flex items-center justify-center p-8 md:ml-72">
           <div className="text-slate-600">Loading dashboard overview…</div>
         </main>
       </div>
@@ -60,9 +60,9 @@ export default function Dashboard() {
 
   if (error || !data.overview) {
     return (
-      <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans">
+      <div className="flex min-h-screen flex-col overflow-hidden bg-slate-50 font-sans md:flex-row">
         <Sidebar />
-        <main className="flex-1 flex items-center justify-center p-8 md:ml-72 text-red-600">
+        <main className="w-full min-w-0 flex-1 flex items-center justify-center p-8 md:ml-72 text-red-600">
           {error ?? "Unable to load dashboard details."}
         </main>
       </div>
@@ -122,10 +122,10 @@ export default function Dashboard() {
         .delay-300 { animation-delay: 300ms; }
       `}</style>
 
-      <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans">
+      <div className="flex min-h-screen flex-col overflow-hidden bg-slate-50 font-sans md:flex-row">
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 md:ml-72">
+        <main className="w-full min-w-0 flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 md:ml-72">
           
           <div className="mx-auto max-w-7xl">
             {/* Header Area */}

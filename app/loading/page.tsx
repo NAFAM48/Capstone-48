@@ -40,12 +40,12 @@ export default function LoadingPage() {
 
     return (
 
-        <main className="min-h-screen flex items-center justify-center bg-gray-100">
+        <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
 
-            <div className="bg-white shadow-2xl rounded-2xl p-12 w-[700px] text-center">
+            <div className="bg-white shadow-2xl rounded-2xl p-6 sm:p-12 w-full max-w-[700px] text-center">
 
 
-                <h1 className="text-5xl font-black text-blue-900">
+                <h1 className="text-4xl sm:text-5xl font-black text-blue-900">
 
                     NAFAM
 

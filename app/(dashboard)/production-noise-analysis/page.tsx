@@ -195,7 +195,7 @@ export default function ProductionNoiseAnalysis() {
             <h2 className="text-lg font-bold text-slate-900">Current Noise Level</h2>
             <p className="text-xs text-slate-500">Real-time factory ambient spectrum</p>
 
-            <div className="mt-6 flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50/50 p-5">
+            <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-5 sm:flex-row sm:items-center">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Acoustic Index</p>
                 <p className="mt-1 text-3xl font-black text-emerald-600">{currentLevel.label}</p>
