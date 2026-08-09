@@ -26,7 +26,7 @@ function UnreadBadge() {
 
   return (
     <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[0.65rem] font-bold text-white">
-      {count}
+      {/* {count} */}
     </span>
   );
 }
