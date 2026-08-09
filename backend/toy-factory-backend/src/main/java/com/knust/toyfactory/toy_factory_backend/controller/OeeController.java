@@ -81,7 +81,7 @@ public class OeeController {
 
         double totalDowntimeMinutes = downtimeEvents.stream()
             .filter(e -> e.getStartTime() != null && e.getEndTime() != null)
-            .mapToDouble(e -> Duration.between(e.getStartTime(), e.getEndTime()).toMinutes())
+            .mapToDouble(e -> Duration.between(e.getStartTime(), e.getEndTime()).toSeconds() / 60.0)
             .sum();
 
         double operatingTime = totalPlannedTime - totalDowntimeMinutes;
@@ -91,14 +91,15 @@ public class OeeController {
         int totalDefective = records.stream().mapToInt(r -> r.getDefectiveUnits() != null ? r.getDefectiveUnits() : 0).sum();
         int totalCount = totalGood + totalDefective;
 
-        double avgIdealCycleTime = records.stream()
+        double avgIdealCycleTimeSeconds = records.stream()
             .filter(r -> r.getIdealCycleTime() != null)
             .mapToDouble(ProductionRecord::getIdealCycleTime)
             .average()
             .orElse(1.0);
+        double avgIdealCycleTimeMinutes = avgIdealCycleTimeSeconds / 60.0;
 
         double availability = oeeService.calculateAvailability(operatingTime, totalPlannedTime);
-        double performance = oeeService.calculatePerformance(avgIdealCycleTime, totalCount, operatingTime);
+        double performance = oeeService.calculatePerformance(avgIdealCycleTimeMinutes, totalCount, operatingTime);
         double quality = oeeService.calculateQuality(totalGood, totalCount);
         double oee = oeeService.calculateOEE(availability, performance, quality);
 

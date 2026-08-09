@@ -27,12 +27,12 @@ export function calculateOee(availability: number, performance: number, quality:
   return Math.max(0, Math.min(1, availability * performance * quality));
 }
 
-function formatMinutes(durationMs: number) {
-  return Math.round(durationMs / 60000);
+function toMinutes(durationMs: number) {
+  return durationMs / 60000;
 }
 
 export function getDowntimeMinutes(events: DowntimeEvent[]) {
-  return events.reduce((sum, event) => sum + formatMinutes(new Date(event.end).getTime() - new Date(event.start).getTime()), 0);
+  return events.reduce((sum, event) => sum + toMinutes(new Date(event.end).getTime() - new Date(event.start).getTime()), 0);
 }
 
 export function getAverageCycleTime(records: ProductionRecord[]) {
@@ -113,7 +113,7 @@ export function summarizeByLine(records: ProductionRecord[]) {
 export function summarizeDowntimeByReason(events: DowntimeEvent[]) {
   const map = new Map<string, number>();
   events.forEach((event) => {
-    const minutes = formatMinutes(new Date(event.end).getTime() - new Date(event.start).getTime());
+    const minutes = toMinutes(new Date(event.end).getTime() - new Date(event.start).getTime());
     map.set(event.reason, (map.get(event.reason) ?? 0) + minutes);
   });
   return Array.from(map, ([reason, minutes]) => ({ reason, minutes })).sort((a, b) => b.minutes - a.minutes);
