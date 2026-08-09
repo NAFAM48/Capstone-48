@@ -1,0 +1,17 @@
+com\knust\toyfactory\toy_factory_backend\controller\HealthController.class
+com\knust\toyfactory\toy_factory_backend\controller\DowntimeEventController.class
+com\knust\toyfactory\toy_factory_backend\config\SecurityConfig.class
+com\knust\toyfactory\toy_factory_backend\controller\SensorReadingController.class
+com\knust\toyfactory\toy_factory_backend\repository\MachineRepository.class
+com\knust\toyfactory\toy_factory_backend\repository\DowntimeEventRepository.class
+com\knust\toyfactory\toy_factory_backend\controller\MachineController.class
+com\knust\toyfactory\toy_factory_backend\model\Machine.class
+com\knust\toyfactory\toy_factory_backend\ToyFactoryBackendApplication.class
+com\knust\toyfactory\toy_factory_backend\model\User.class
+com\knust\toyfactory\toy_factory_backend\repository\SensorReadingRepository.class
+com\knust\toyfactory\toy_factory_backend\service\OeeCalculationService.class
+com\knust\toyfactory\toy_factory_backend\controller\OeeController.class
+com\knust\toyfactory\toy_factory_backend\repository\UserRepository.class
+com\knust\toyfactory\toy_factory_backend\model\DowntimeEvent.class
+com\knust\toyfactory\toy_factory_backend\controller\AuthController.class
+com\knust\toyfactory\toy_factory_backend\model\SensorReading.class

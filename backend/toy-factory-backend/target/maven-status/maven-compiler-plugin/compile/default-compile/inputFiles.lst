@@ -1,0 +1,17 @@
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\config\SecurityConfig.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\controller\AuthController.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\controller\DowntimeEventController.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\controller\HealthController.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\controller\MachineController.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\controller\OeeController.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\controller\SensorReadingController.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\model\DowntimeEvent.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\model\Machine.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\model\SensorReading.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\model\User.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\repository\DowntimeEventRepository.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\repository\MachineRepository.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\repository\SensorReadingRepository.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\repository\UserRepository.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\service\OeeCalculationService.java
+C:\Computational\Capstone project\web\backend\toy-factory-backend\src\main\java\com\knust\toyfactory\toy_factory_backend\ToyFactoryBackendApplication.java

@@ -1,0 +1,10 @@
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\BackendApplication.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\process\Machine.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\process\MachineRepository.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\SecurityConfig.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\simulation\DowntimeController.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\simulation\DowntimeEvent.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\simulation\DowntimeEventRepository.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\simulation\MachineSimulator.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\simulation\ProductionRecord.java
+C:\Computational\Capstone project\web\backend\src\main\java\com\ampm\simulation\ProductionRecordRepository.java
