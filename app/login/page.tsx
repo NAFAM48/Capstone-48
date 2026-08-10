@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth";
+import { createSessionToken } from "@/lib/auth";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -9,29 +13,70 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const setAuth = useAuthStore((s) => s.setAuth);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setLoading(true);
 
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const result = await response.json();
-    setLoading(false);
-
-    if (!response.ok) {
-      setError(result.error ?? "Failed to sign in.");
+    if (!apiUrl) {
+      setError("Missing API base URL.");
+      setLoading(false);
       return;
     }
 
-    window.localStorage.setItem("nafam_token", result.token);
-    window.localStorage.setItem("nafam_role", result.role);
-    router.push("/dashboard");
+    try {
+      const response = await fetch(`${apiUrl}/auth/signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      // Backend may return plain text on error
+      const contentType = response.headers.get("content-type") ?? "";
+      const result = contentType.includes("application/json")
+        ? await response.json().catch(() => ({}))
+        : { error: await response.text().catch(() => "Request failed.") };
+
+      if (!response.ok) {
+        setError(result.error ?? result.message ?? "Invalid credentials. Please try again.");
+        return;
+      }
+
+      // Backend returns { message, email, role } — no JWT token.
+      // Generate a local session token so the rest of the app works.
+      const userEmail = result.email ?? email;
+
+      // Normalise backend role strings to frontend Role type
+      const ROLE_MAP: Record<string, string> = {
+        OPERATOR: "Viewer",
+        Admin: "Admin",
+        "Plant Manager": "Plant Manager",
+        Viewer: "Viewer",
+      };
+      const role = (ROLE_MAP[result.role] ?? result.role ?? "Viewer") as import("@/lib/demo-data").Role;
+      const token = createSessionToken(role);
+
+      // Keep Zustand store (persisted) and localStorage in sync
+      setAuth(token, role, userEmail);
+      // Also write to cookie so Edge Middleware can enforce role-based routing
+      document.cookie = `nafam_token=${token}; path=/; SameSite=Lax`;
+
+      window.localStorage.setItem("nafam_token", token);
+      window.localStorage.setItem("nafam_role", role);
+      window.localStorage.setItem("nafam_user", userEmail);
+
+      router.push("/dashboard");
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? `Network error: ${err.message}`
+          : "Could not reach the server. Please check your connection."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -65,7 +110,7 @@ export default function LoginPage() {
             
             <div className="mb-8 text-center">
               <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50/50 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 backdrop-blur-sm">
-                NAFAM OEE Control
+                NAFAM Toy Factory
               </span>
               <h1 className="mt-4 text-3xl font-extrabold text-slate-900">Welcome back</h1>
               <p className="mt-2 text-sm text-slate-600">Sign in to access your manufacturing dashboard.</p>
@@ -131,23 +176,30 @@ export default function LoginPage() {
               </button>
             </form>
 
+            <div className="mt-4 text-center text-sm text-slate-600">
+              Don&apos;t have an account?{' '}
+              <a href="/signup" className="font-semibold text-blue-700 hover:text-blue-800">
+                Sign up
+              </a>
+            </div>
+
             {/* Demo Credentials Box */}
             <div className="mt-8 rounded-2xl border border-slate-200/60 bg-white/40 p-4">
               <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Demo Accounts</p>
-              <div className="space-y-2 text-sm text-slate-600">
-                <div className="flex items-center justify-between rounded-lg bg-white/60 p-2 px-3">
-                  <span className="font-medium text-slate-900">Admin</span>
-                  <span className="font-mono text-xs text-slate-500">admin@nafam.com / demo</span>
+                <div className="flex flex-col gap-3 sm:gap-2 text-sm text-slate-600">
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/60 p-2 px-3">
+                    <span className="font-medium text-slate-900">Admin</span>
+                    <span className="font-mono text-xs text-slate-500">admin@nafam.com / demo</span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/60 p-2 px-3">
+                    <span className="font-medium text-slate-900">Manager</span>
+                    <span className="font-mono text-xs text-slate-500">manager@nafam.com / demo</span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/60 p-2 px-3">
+                    <span className="font-medium text-slate-900">Viewer</span>
+                    <span className="font-mono text-xs text-slate-500">viewer@nafam.com / demo</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between rounded-lg bg-white/60 p-2 px-3">
-                  <span className="font-medium text-slate-900">Manager</span>
-                  <span className="font-mono text-xs text-slate-500">manager@nafam.com / demo</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-white/60 p-2 px-3">
-                  <span className="font-medium text-slate-900">Viewer</span>
-                  <span className="font-mono text-xs text-slate-500">viewer@nafam.com / demo</span>
-                </div>
-              </div>
             </div>
             
           </div>

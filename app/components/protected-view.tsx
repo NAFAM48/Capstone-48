@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
+const emptySubscribe = () => () => {};
+
 export default function ProtectedView({ children }: { children: ReactNode }) {
-  const [isClient, setIsClient] = useState(false);
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const router = useRouter();
 
   useEffect(() => {
-    setIsClient(true);
     const token = window.localStorage.getItem("nafam_token");
     if (!token) {
       router.replace("/");

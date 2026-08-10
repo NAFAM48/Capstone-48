@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: toy-factory-backend
+    runtime: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: SPRING_DATASOURCE_URL
+        value: ""
+      - key: SPRING_DATASOURCE_USERNAME
+        value: ""
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: ""
+      - key: SPRING_DATASOURCE_SSLMODE
+        value: "require"
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: "update"
+      - key: SPRING_JPA_SHOW_SQL
+        value: "true"
+      - key: SPRING_JPA_HIBERNATE_DIALECT
+        value: "org.hibernate.dialect.PostgreSQLDialect"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://nafam-toy-factory.vercel.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080"
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
