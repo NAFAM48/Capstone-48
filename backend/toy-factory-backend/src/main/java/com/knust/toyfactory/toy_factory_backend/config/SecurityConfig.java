@@ -43,8 +43,9 @@ public class SecurityConfig {
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "http://localhost:8080",
-            "https://*.onrender.com"
+            "https://nafam-toy-factory-nafam.vercel.app"
         ));
+        configuration.setAllowedOriginPatterns(List.of("https://*.onrender.com"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
