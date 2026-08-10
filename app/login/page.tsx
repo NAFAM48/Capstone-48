@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
+import { createSessionToken } from "@/lib/auth";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,14 +20,20 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
+    if (!apiUrl) {
+      setError("Missing API base URL.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch("/api/login", {
+      const response = await fetch(`${apiUrl}/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      // BFF may return plain text on error
+      // Backend may return plain text on error
       const contentType = response.headers.get("content-type") ?? "";
       const result = contentType.includes("application/json")
         ? await response.json().catch(() => ({}))
@@ -35,10 +44,19 @@ export default function LoginPage() {
         return;
       }
 
-      // BFF returns { token, email, role } — local session token for the rest of the app.
+      // Backend returns { message, email, role } — no JWT token.
+      // Generate a local session token so the rest of the app works.
       const userEmail = result.email ?? email;
-      const role = (result.role ?? "Viewer") as import("@/lib/demo-data").Role;
-      const token = result.token;
+
+      // Normalise backend role strings to frontend Role type
+      const ROLE_MAP: Record<string, string> = {
+        OPERATOR: "Viewer",
+        Admin: "Admin",
+        "Plant Manager": "Plant Manager",
+        Viewer: "Viewer",
+      };
+      const role = (ROLE_MAP[result.role] ?? result.role ?? "Viewer") as import("@/lib/demo-data").Role;
+      const token = createSessionToken(role);
 
       // Keep Zustand store (persisted) and localStorage in sync
       setAuth(token, role, userEmail);

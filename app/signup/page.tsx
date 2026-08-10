@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +20,11 @@ export default function SignupPage() {
     setError(null);
     setSuccess(null);
 
+    if (!apiUrl) {
+      setError("Missing API base URL.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -25,27 +32,22 @@ export default function SignupPage() {
 
     setLoading(true);
 
-    try {
-      const response = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    const response = await fetch(`${apiUrl}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const result = await response.json().catch(() => ({}));
-      setLoading(false);
+    const result = await response.json().catch(() => ({}));
+    setLoading(false);
 
-      if (!response.ok) {
-        setError(result.error ?? "Failed to create account.");
-        return;
-      }
-
-      setSuccess("Account created successfully. You can now sign in.");
-      router.push("/login");
-    } catch {
-      setLoading(false);
-      setError("Could not reach the server. Please check your connection.");
+    if (!response.ok) {
+      setError(result.error ?? "Failed to create account.");
+      return;
     }
+
+    setSuccess("Account created successfully. You can now sign in.");
+    router.push("/login");
   }
 
   return (
