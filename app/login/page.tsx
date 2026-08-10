@@ -168,20 +168,20 @@ export default function LoginPage() {
             {/* Demo Credentials Box */}
             <div className="mt-8 rounded-2xl border border-slate-200/60 bg-white/40 p-4">
               <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Demo Accounts</p>
-              <div className="space-y-2 text-sm text-slate-600">
-                <div className="flex items-center justify-between rounded-lg bg-white/60 p-2 px-3">
-                  <span className="font-medium text-slate-900">Admin</span>
-                  <span className="font-mono text-xs text-slate-500">admin@nafam.com / demo</span>
+                <div className="flex flex-col gap-3 sm:gap-2 text-sm text-slate-600">
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/60 p-2 px-3">
+                    <span className="font-medium text-slate-900">Admin</span>
+                    <span className="font-mono text-xs text-slate-500">admin@nafam.com / demo</span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/60 p-2 px-3">
+                    <span className="font-medium text-slate-900">Manager</span>
+                    <span className="font-mono text-xs text-slate-500">manager@nafam.com / demo</span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/60 p-2 px-3">
+                    <span className="font-medium text-slate-900">Viewer</span>
+                    <span className="font-mono text-xs text-slate-500">viewer@nafam.com / demo</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between rounded-lg bg-white/60 p-2 px-3">
-                  <span className="font-medium text-slate-900">Manager</span>
-                  <span className="font-mono text-xs text-slate-500">manager@nafam.com / demo</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-white/60 p-2 px-3">
-                  <span className="font-medium text-slate-900">Viewer</span>
-                  <span className="font-mono text-xs text-slate-500">viewer@nafam.com / demo</span>
-                </div>
-              </div>
             </div>
             
           </div>
