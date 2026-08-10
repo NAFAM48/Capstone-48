@@ -25,7 +25,7 @@ function UnreadBadge() {
   }
 
   return (
-    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[0.65rem] font-bold text-white">
+    <span className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[0.65rem] font-bold text-white">
       {/* {count} */}
     </span>
   );
@@ -112,10 +112,53 @@ interface SidebarProps {
   userRole?: string;
 }
 
+interface NavListProps {
+  pathname: string;
+  onNavigate?: () => void;
+}
+
+function NavList({ pathname, onNavigate }: NavListProps) {
+  return (
+    <div className="flex flex-col gap-1">
+      {navItems.map((item, index) => {
+        const isActive = pathname === item.href;
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={`group relative flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 animate-fade-up ${
+              isActive
+                ? "bg-blue-600/10 text-blue-400"
+                : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+            }`}
+            style={{ animationDelay: `${index * 40}ms` }}
+          >
+            {/* Active Indicator Line */}
+            {isActive && (
+              <div className="absolute left-0 top-1/2 h-1/2 w-1 -translate-y-1/2 rounded-r-full bg-blue-500" />
+            )}
+
+            {/* Icon */}
+            <div className={`transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-blue-500" : "text-slate-500"}`}>
+              {item.icon}
+            </div>
+
+            <span className="min-w-0 truncate">{item.label}</span>
+            {item.href === "/notifications" && <UnreadBadge />}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const storeUser = useAuthStore((s) => s.user);
   const storeRole = useAuthStore((s) => s.role);
 
@@ -128,6 +171,30 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  // Close the mobile drawer after navigating to a new page
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll and close the drawer on Escape while it is open
+  useEffect(() => {
+    if (!mobileOpen) {
+      return;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen]);
 
   const handleSignOut = async () => {
     if (signingOut) {
@@ -162,78 +229,173 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
           }
         }
         .animate-fade-up {
+          opacity: 0;
           animation: fadeUp 0.3s ease-out forwards;
         }
       `}</style>
 
-      <aside className="sticky top-0 left-0 z-20 flex flex-col border-r border-slate-800 bg-[#0B1120] text-slate-300 w-full md:fixed md:h-screen md:min-h-screen md:w-72 md:shrink-0 md:overflow-y-auto">
-        
-        {/* Brand Header */}
-        <div className="flex items-center justify-between px-4 py-3 md:px-8 md:py-8">
-          <div className="flex items-center gap-3 min-w-0">
+      {/* ================= Mobile Top Bar ================= */}
+      <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800 bg-[#0B1120] px-4 py-3 text-slate-300 md:hidden">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-drawer"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/40 text-slate-300 transition-all duration-200 hover:bg-slate-700/40 hover:text-white active:scale-95"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          <div className="flex min-w-0 items-center gap-2.5">
             <Image
               src="/nafam-logo.png"
               alt="NAFAM logo"
               width={1536}
               height={1024}
-              className="h-9 w-9 shrink-0 rounded-xl shadow-lg shadow-blue-900/50 object-cover md:h-10 md:w-10"
+              className="h-8 w-8 shrink-0 rounded-lg object-cover shadow-md shadow-blue-900/50"
+            />
+            <div className="min-w-0">
+              <p className="text-[0.6rem] font-bold uppercase tracking-[0.3em] text-slate-500">NAFAM</p>
+              <h1 className="truncate text-sm font-black tracking-tight text-white">Toy Factory</h1>
+            </div>
+          </div>
+        </div>
+
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          </span>
+          Live
+        </span>
+      </div>
+
+      {/* ================= Mobile Drawer ================= */}
+      <div
+        id="mobile-nav-drawer"
+        className={`fixed inset-0 z-50 md:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
+        aria-hidden={!mobileOpen}
+        inert={!mobileOpen}
+      >
+        {/* Backdrop */}
+        <div
+          onClick={() => setMobileOpen(false)}
+          className={`absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 ease-out ${
+            mobileOpen ? "opacity-100" : "opacity-0"
+          }`}
+        />
+
+        {/* Drawer Panel */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          className={`absolute left-0 top-0 flex h-full w-72 max-w-[85%] flex-col border-r border-slate-800 bg-[#0B1120] text-slate-300 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out will-change-transform ${
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between gap-3 px-5 py-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <Image
+                src="/nafam-logo.png"
+                alt="NAFAM logo"
+                width={1536}
+                height={1024}
+                className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-lg shadow-blue-900/50"
+              />
+              <div className="min-w-0">
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.3em] text-slate-500">NAFAM</p>
+                <h1 className="truncate text-lg font-black tracking-tight text-white">Toy Factory</h1>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/40 text-slate-400 transition-all duration-200 hover:bg-slate-700/40 hover:text-white active:scale-95"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Drawer Navigation */}
+          <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-2">
+            <NavList
+              key={mobileOpen ? "open" : "closed"}
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          </nav>
+
+          {/* Drawer Footer */}
+          <div className="border-t border-slate-800 p-4">
+            <div className="flex items-center gap-3 rounded-xl px-2 py-2">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-bold text-white">
+                {userInitials}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-slate-200">{resolvedName}</p>
+                <p className="truncate text-xs text-slate-500">{resolvedRole}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-60"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {signingOut ? "Signing out…" : "Sign Out"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= Desktop Sidebar ================= */}
+      <aside className="hidden border-r border-slate-800 bg-[#0B1120] text-slate-300 md:fixed md:top-0 md:left-0 md:z-20 md:flex md:h-screen md:min-h-screen md:w-72 md:shrink-0 md:flex-col md:overflow-y-auto">
+        {/* Brand Header */}
+        <div className="flex items-center justify-between px-8 py-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <Image
+              src="/nafam-logo.png"
+              alt="NAFAM logo"
+              width={1536}
+              height={1024}
+              className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-lg shadow-blue-900/50"
             />
             <div className="min-w-0">
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.3em] text-slate-500">NAFAM</p>
-              <h1 className="truncate text-base font-black tracking-tight text-white md:text-lg">Toy Factory</h1>
+              <h1 className="truncate text-lg font-black tracking-tight text-white">Toy Factory</h1>
             </div>
           </div>
-          
-          <div className="hidden rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 md:block">
+
+          <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
             Live
           </div>
         </div>
 
         {/* Navigation Area */}
-        <nav className="no-scrollbar flex w-full overflow-x-auto px-3 pb-3 md:block md:overflow-visible md:px-4 md:pb-8">
-          <div className="flex w-full gap-2 md:flex-col md:space-y-1">
-            {navItems.map((item, index) => {
-              const isActive = pathname === item.href;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group relative flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 animate-fade-up md:gap-3 md:px-4 md:py-3
-                    ${isActive 
-                      ? "bg-blue-600/10 text-blue-400" 
-                      : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-                    }
-                  `}
-                  style={{
-                    animationDelay: `${index * 40}ms`
-                  }}
-                >
-                  {/* Active Indicator Line (Desktop) */}
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 hidden h-1/2 w-1 -translate-y-1/2 rounded-r-full bg-blue-500 md:block" />
-                  )}
-
-                  {/* Icon */}
-                  <div className={`transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-blue-500" : "text-slate-500"}`}>
-                    {item.icon}
-                  </div>
-                  
-                  <span>{item.label}</span>
-                  {item.href === "/notifications" && <UnreadBadge />}
-                </Link>
-              );
-            })}
-          </div>
+        <nav className="no-scrollbar flex-1 overflow-y-auto px-4 pb-8">
+          <NavList pathname={pathname} />
         </nav>
-        
-        {/* User Profile / Bottom Section (Desktop Only) */}
-        <div className="mt-auto hidden border-t border-slate-800 p-4 md:block">
-          <div className="flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-slate-800/50 cursor-pointer transition-colors">
+
+        {/* User Profile / Bottom Section */}
+        <div className="border-t border-slate-800 p-4">
+          <div className="flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer transition-colors hover:bg-slate-800/50">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-700 text-sm font-bold text-white">
               {userInitials}
             </div>
-            <div className="overflow-hidden">
+            <div className="min-w-0">
               <p className="truncate text-sm font-medium text-slate-200">{resolvedName}</p>
               <p className="truncate text-xs text-slate-500">{resolvedRole}</p>
             </div>
@@ -251,22 +413,6 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
             {signingOut ? "Signing out…" : "Sign Out"}
           </button>
         </div>
-
-        {/* Sign Out (Mobile Only) */}
-        <div className="border-t border-slate-800 p-3 md:hidden">
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={signingOut}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-60"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            {signingOut ? "Signing out…" : "Sign Out"}
-          </button>
-        </div>
-
       </aside>
     </>
   );
