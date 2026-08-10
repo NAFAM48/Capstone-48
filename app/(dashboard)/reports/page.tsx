@@ -157,7 +157,7 @@ export default function Reports() {
             <div className="mb-1 flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">NAFAM OEE Control</span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Reports</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Reports</h1>
             <p className="mt-1 text-sm text-slate-500">View downtime events, filter results, and export incident reports.</p>
           </div>
 

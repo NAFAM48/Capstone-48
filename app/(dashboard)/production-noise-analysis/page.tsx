@@ -100,7 +100,7 @@ export default function ProductionNoiseAnalysis() {
                 NAFAM OEE Control
               </span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
               Production Noise Analysis
             </h1>
             <p className="mt-1 text-sm text-slate-500">

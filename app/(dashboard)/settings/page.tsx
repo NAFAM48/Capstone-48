@@ -119,7 +119,7 @@ export default function Settings() {
             <div className="mb-1 flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">NAFAM Toy Factory</span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Settings</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Settings</h1>
             <p className="mt-1 text-sm text-slate-500">Manage machines, register downtime incidents, and update the factory model.</p>
           </div>
 

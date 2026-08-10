@@ -169,18 +169,18 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
       <aside className="sticky top-0 left-0 z-20 flex flex-col border-r border-slate-800 bg-[#0B1120] text-slate-300 w-full md:fixed md:h-screen md:min-h-screen md:w-72 md:shrink-0 md:overflow-y-auto">
         
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-4 py-4 md:px-8 md:py-8">
+        <div className="flex items-center justify-between px-4 py-3 md:px-8 md:py-8">
           <div className="flex items-center gap-3 min-w-0">
             <Image
               src="/nafam-logo.png"
               alt="NAFAM logo"
               width={1536}
               height={1024}
-              className="h-10 w-10 rounded-xl shadow-lg shadow-blue-900/50 object-cover"
+              className="h-9 w-9 shrink-0 rounded-xl shadow-lg shadow-blue-900/50 object-cover md:h-10 md:w-10"
             />
-            <div>
+            <div className="min-w-0">
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.3em] text-slate-500">NAFAM</p>
-              <h1 className="text-lg font-black tracking-tight text-white">Toy Factory</h1>
+              <h1 className="truncate text-base font-black tracking-tight text-white md:text-lg">Toy Factory</h1>
             </div>
           </div>
           
@@ -190,7 +190,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
         </div>
 
         {/* Navigation Area */}
-        <nav className="no-scrollbar flex w-full overflow-x-auto px-4 pb-4 md:block md:overflow-visible md:px-4 md:pb-8">
+        <nav className="no-scrollbar flex w-full overflow-x-auto px-3 pb-3 md:block md:overflow-visible md:px-4 md:pb-8">
           <div className="flex w-full gap-2 md:flex-col md:space-y-1">
             {navItems.map((item, index) => {
               const isActive = pathname === item.href;
@@ -199,7 +199,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 animate-fade-up
+                  className={`group relative flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 animate-fade-up md:gap-3 md:px-4 md:py-3
                     ${isActive 
                       ? "bg-blue-600/10 text-blue-400" 
                       : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
@@ -253,12 +253,12 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
         </div>
 
         {/* Sign Out (Mobile Only) */}
-        <div className="border-t border-slate-800 p-4 md:hidden">
+        <div className="border-t border-slate-800 p-3 md:hidden">
           <button
             type="button"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-60"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
